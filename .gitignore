@@ -1,0 +1,6 @@
+.DS_Store
+/.idea
+*.csv
+/target
+*.json
+*.iml
