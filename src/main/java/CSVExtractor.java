@@ -1,12 +1,12 @@
 import javax.json.*;
 import java.io.*;
 
-public class Main {
+public class CSVExtractor {
 
     public static void main(String[] args) throws FileNotFoundException {
 
-        JsonArray roadsArray = getRoads("src/main/resources/roadsNew.json");
-        JsonObject roadsDensityObject = getRoadsDensity("src/main/resources/roadsDensityNew.json");
+        JsonArray roadsArray = getRoads("roadsNew.json");
+        JsonObject roadsDensityObject = getRoadsDensity("roadsDensityNew.json");
 
         try (PrintWriter writer = new PrintWriter("output.csv")) {
 

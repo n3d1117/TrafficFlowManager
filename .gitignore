@@ -4,3 +4,8 @@
 /target
 *.json
 *.iml
+*.dbf
+*.fix
+*.prj
+*.shp
+*.shx
