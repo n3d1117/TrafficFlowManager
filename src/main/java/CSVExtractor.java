@@ -3,12 +3,16 @@ import java.io.*;
 
 public class CSVExtractor {
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void extract(String roadsJson, String roadsDensityJson, String outputFile) throws FileNotFoundException {
 
-        JsonArray roadsArray = getRoads("roadsNew.json");
-        JsonObject roadsDensityObject = getRoadsDensity("roadsDensityNew.json");
+        System.out.println("[CSVExtractor] Extracting CSV...");
 
-        try (PrintWriter writer = new PrintWriter("output.csv")) {
+        JsonArray roadsArray = getRoads(roadsJson);
+        JsonObject roadsDensityObject = getRoadsDensity(roadsDensityJson);
+
+        try (PrintWriter writer = new PrintWriter(outputFile)) {
+
+            System.out.println("[CSVExtractor] Writing output to " + outputFile);
 
             StringBuilder sb = new StringBuilder();
             sb.append("segment_id,road_id,start_lat,start_long,end_lat,end_long,lanes,fipili,traffic_value,traffic_label");
@@ -47,6 +51,8 @@ public class CSVExtractor {
                 }
             }
             writer.write(sb.toString());
+
+            System.out.println("[CSVExtractor] Done!");
         }
     }
 

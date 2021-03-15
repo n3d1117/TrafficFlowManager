@@ -23,32 +23,24 @@ import org.opengis.feature.type.GeometryType;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 // Source: https://gitlab.com/snippets/9275
-public class WriteShapeFile {
+public class SHPWriter {
 
     private ShapefileDataStore shpDataStore;
 
-    public WriteShapeFile(File f) {
-
+    public SHPWriter(File f) {
         ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory();
-
         Map<String, Serializable> params = new HashMap<>();
         try {
             params.put("url", f.toURI().toURL());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        params.put("create spatial index", Boolean.TRUE);
-
-        try {
+            params.put("create spatial index", Boolean.TRUE);
             shpDataStore = (ShapefileDataStore) dataStoreFactory.createNewDataStore(params);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -138,8 +130,8 @@ public class WriteShapeFile {
                 }
                 shpDataStore.dispose();
             } else {
-                shpDataStore.dispose();
-                System.err.println("ShapefileStore not writable");
+                // Just try again, it should work
+                writeFeatures(features);
             }
         } catch (IOException e) {
             e.printStackTrace();

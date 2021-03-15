@@ -17,12 +17,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SHPExtractor {
-    public static void main(String[] args) throws IOException {
+
+    public static void extract(String inputCsv, String outputShp) throws IOException {
+
+        System.out.println("[SHPExtractor] Extracting Shapefile...");
 
         // Input file
-        File inputFile = new File("output.csv");
+        File inputFile = new File(inputCsv);
         if (!inputFile.exists())
-            System.exit(1);
+            throw new IOException("Input file does not exist!");
 
         // Create Feature type
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
@@ -56,7 +59,7 @@ public class SHPExtractor {
 
             // First line of the data file is the header
             String line = reader.readLine();
-            System.out.println("Header: " + line);
+            System.out.println("[SHPExtractor] Header: " + line);
 
             for (line = reader.readLine(); line != null; line = reader.readLine()) {
                 if (line.trim().length() > 0) { // skip blank lines
@@ -101,8 +104,10 @@ public class SHPExtractor {
         }
 
         // Get an output file name and write the shapefile
-        File outputFile = new File("tfm_sample.shp");
-        WriteShapeFile writer = new WriteShapeFile(outputFile);
+        System.out.println("[SHPExtractor] Writing output to " + outputShp);
+        File outputFile = new File(outputShp);
+        SHPWriter writer = new SHPWriter(outputFile);
         writer.writeFeatures(DataUtilities.collection(collection));
+        System.out.println("[SHPExtractor] Done!");
     }
 }
