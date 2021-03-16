@@ -3,21 +3,14 @@ import java.net.URL;
 
 public class GeoServerHelper {
 
-    private static final String endpoint = "http://localhost:8080/geoserver/rest/";
-    private static final String user = "admin";
-    private static final String pass = "geoserver";
-    private static final String workspace = "tfmsample";
-    private static final String datastore = "TFM%20Sample";
-    private static final String datastoreEndpoint = endpoint + "workspaces/" + workspace +"/datastores/" + datastore;
-
-    // todo delete
-    public static void main(String[] args) throws IOException {
-        readDatastore();
-    }
-
-    public static void readDatastore() throws IOException {
-        URL url = new URL(datastoreEndpoint);
-        String response = HTTPHelper.doRequest(url, true);
-        System.out.println(response);
+    // Uploads shp to the data store, creating it if necessary
+    // Doc: https://docs.geoserver.org/latest/en/api/#/latest/en/api/1.0.0/datastores.yaml
+    public static void publishShp(String endpoint, String workspace, String datastore,
+                                  String user, String pass, String zipFile) throws IOException {
+        System.out.println("[GeoServerHelper] Publishing shapefile to datastore " + datastore + "...");
+        String datastoreEndpoint = endpoint + "/workspaces/" + workspace + "/datastores/" + datastore;
+        URL url = new URL(datastoreEndpoint + "/file.shp");
+        Integer response = HTTPHelper.doRequest(url, "PUT", "application/zip", user, pass, zipFile);
+        System.out.println("[GeoServerHelper] Got response: " + response.toString());
     }
 }

@@ -1,25 +1,25 @@
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 
 public class HTTPHelper {
 
-    public static String doRequest(URL url, Boolean jsonOutput) throws IOException {
-        return doRequest(url, "GET", "application/json", jsonOutput,
-                false, null, null, new HashMap<>(), null);
+    public static Integer doRequest(URL url, String method,
+                                   String contentType,
+                                   String user,
+                                   String pass,
+                                   String fileToUpload) throws IOException {
+        return doRequest(url, method, contentType, false,
+                true, user, pass, fileToUpload);
     }
 
-    public static String doRequest(URL url, String method,
+    public static Integer doRequest(URL url, String method,
                                    String contentType,
                                    Boolean jsonOutput,
                                    Boolean usesAuthentication,
                                    String user,
                                    String pass,
-                                   Map<String, String> parameters,
                                    String fileToUpload) throws IOException {
 
         HttpURLConnection con = (HttpURLConnection)url.openConnection();
@@ -37,15 +37,6 @@ public class HTTPHelper {
             con.setRequestProperty("Authorization", basicAuth);
         }
 
-        // Parameters
-        if (!parameters.isEmpty()) {
-            con.setDoOutput(true);
-            DataOutputStream out = new DataOutputStream(con.getOutputStream());
-            out.writeBytes(getParamsString(parameters));
-            out.flush();
-            out.close();
-        }
-
         // File upload
         if (fileToUpload != null) {
             con.setDoOutput(true);
@@ -61,11 +52,11 @@ public class HTTPHelper {
             bos.close();
         }
 
+        Integer responseCode = con.getResponseCode();
+
         // Read response
-        int status = con.getResponseCode();
         Reader streamReader;
-        if (status > 299) {
-            System.out.println(status);
+        if (responseCode > 299) {
             streamReader = new InputStreamReader(con.getErrorStream());
         } else {
             streamReader = new InputStreamReader(con.getInputStream());
@@ -77,20 +68,10 @@ public class HTTPHelper {
             content.append(inputLine);
         }
         in.close();
-        con.disconnect();
-        return content.toString();
-    }
+        if (!content.toString().isEmpty())
+            System.out.println(content.toString());
 
-    // Source: https://www.baeldung.com/java-http-request
-    private static String getParamsString(Map<String, String> params) throws UnsupportedEncodingException {
-        StringBuilder result = new StringBuilder();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-            result.append("&");
-        }
-        String resultString = result.toString();
-        return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
+        con.disconnect();
+        return responseCode;
     }
 }
