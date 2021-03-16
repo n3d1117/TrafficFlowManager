@@ -5,56 +5,56 @@ import java.util.Base64;
 
 public class HTTPHelper {
 
-    public static Integer doRequest(URL url, String method,
-                                   String contentType,
-                                   String user,
-                                   String pass,
-                                   String fileToUpload) throws IOException {
-        return doRequest(url, method, contentType, false,
-                true, user, pass, fileToUpload);
+    public static Integer uploadFile(String urlString, String contentType, String user, String pass, String fileToUpload) throws IOException {
+        return doRequest(urlString, "PUT", contentType, user, pass, fileToUpload, true);
     }
 
-    public static Integer doRequest(URL url, String method,
-                                   String contentType,
-                                   Boolean jsonOutput,
-                                   Boolean usesAuthentication,
-                                   String user,
-                                   String pass,
-                                   String fileToUpload) throws IOException {
+    public static Integer uploadData(String urlString, String contentType, String user, String pass, String data) throws IOException {
+        return doRequest(urlString, "PUT", contentType, user, pass, data, false);
+    }
 
+    private static Integer doRequest(String urlString, String method, String contentType, String user,
+                                     String pass, String data, Boolean isFileUpload) throws IOException {
+
+        URL url = new URL(urlString);
         HttpURLConnection con = (HttpURLConnection)url.openConnection();
         con.setRequestMethod(method);
 
         // Headers
         con.setRequestProperty("Content-type", contentType);
-        if (jsonOutput)
-            con.setRequestProperty("Accept", "application/json");
+        con.setRequestProperty("Accept", "application/json");
 
         // Authentication
-        if (usesAuthentication) {
-            String userPass = user + ":" + pass;
-            String basicAuth = "Basic " + new String(Base64.getEncoder().encode(userPass.getBytes()));
-            con.setRequestProperty("Authorization", basicAuth);
-        }
+        String userPass = user + ":" + pass;
+        String basicAuth = "Basic " + new String(Base64.getEncoder().encode(userPass.getBytes()));
+        con.setRequestProperty("Authorization", basicAuth);
 
-        // File upload
-        if (fileToUpload != null) {
+        // File or data upload
+        if (data != null) {
             con.setDoOutput(true);
             con.setDoInput(true);
-            File file = new File(fileToUpload);
-            BufferedOutputStream bos = new BufferedOutputStream(con.getOutputStream());
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-            int i;
-            while ((i = bis.read()) > -1) {
-                bos.write(i);
+            if (isFileUpload) {
+                File file = new File(data);
+                BufferedOutputStream bos = new BufferedOutputStream(con.getOutputStream());
+                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+                int i;
+                while ((i = bis.read()) > -1) {
+                    bos.write(i);
+                }
+                bis.close();
+                bos.flush();
+                bos.close();
+            } else {
+                OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+                wr.write(data);
+                wr.flush();
+                wr.close();
             }
-            bis.close();
-            bos.close();
         }
 
-        Integer responseCode = con.getResponseCode();
+        int responseCode = con.getResponseCode();
 
-        // Read response
+        // Print response
         Reader streamReader;
         if (responseCode > 299) {
             streamReader = new InputStreamReader(con.getErrorStream());
