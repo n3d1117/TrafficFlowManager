@@ -73,7 +73,7 @@ public class SHPExtractor {
                     double endLat = Double.parseDouble(tokens[4]);
                     double endLong = Double.parseDouble(tokens[5]);
                     Integer lanes = Integer.parseInt(tokens[6]);
-                    Boolean fipili = Boolean.parseBoolean(tokens[7]);
+                    Boolean fipili = !tokens[7].equals("0");
                     Double trafficValue = Double.parseDouble(tokens[8]);
                     String trafficLabel = tokens[9];
 
