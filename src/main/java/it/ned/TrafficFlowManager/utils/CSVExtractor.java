@@ -1,3 +1,5 @@
+package it.ned.TrafficFlowManager.utils;
+
 import javax.json.*;
 import java.io.*;
 
@@ -129,5 +131,4 @@ public class CSVExtractor {
         reader.close();
         return roadsDensityObject;
     }
-
 }

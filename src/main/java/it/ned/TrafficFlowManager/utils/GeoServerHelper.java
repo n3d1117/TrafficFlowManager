@@ -1,3 +1,5 @@
+package it.ned.TrafficFlowManager.utils;
+
 public class GeoServerHelper {
 
     private final String user;
@@ -22,7 +24,7 @@ public class GeoServerHelper {
         http://localhost:8080/geoserver/rest/workspaces/workspace/datastores/datastore/file.shp
 
        Expected HTTP Response: 201 Created
-     */
+    */
     public void publishShp(String datastore, String zipFile) throws Exception {
         System.out.println("[GeoServerHelper] Publishing shapefile to datastore " + datastore + "...");
         String datastoreEndpoint = endpoint + "/workspaces/" + workspace + "/datastores/" + datastore;

@@ -7,6 +7,8 @@
     <groupId>it.ned</groupId>
     <artifactId>TrafficFlowManager</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>TrafficFlowManager</name>
+    <packaging>war</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,6 +18,14 @@
     </properties>
 
     <dependencies>
+
+        <!-- Java Servlet -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/javax.json/javax.json-api -->
         <dependency>
@@ -47,7 +57,6 @@
             <artifactId>gt-swing</artifactId>
             <version>${geotools.version}</version>
         </dependency>
-
     </dependencies>
 
     <repositories>
@@ -70,6 +79,11 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.0</version>
+            </plugin>
+            <plugin>
                 <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -80,5 +94,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
