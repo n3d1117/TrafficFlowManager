@@ -5,12 +5,9 @@ import java.io.*;
 
 public class CSVExtractor {
 
-    public static void extract(String roadsJson, String roadsDensityJson, String outputFile) throws FileNotFoundException {
+    public static void extract(JsonArray staticGraph, JsonObject reconstructionData, String outputFile) throws FileNotFoundException {
 
         System.out.println("[CSVExtractor] Extracting CSV...");
-
-        JsonArray roadsArray = getRoads(roadsJson);
-        JsonObject roadsDensityObject = getRoadsDensity(roadsDensityJson);
 
         try (PrintWriter writer = new PrintWriter(outputFile)) {
 
@@ -20,11 +17,11 @@ public class CSVExtractor {
             sb.append("segment_id,road_id,start_lat,start_long,end_lat,end_long,lanes,fipili,traffic_value,traffic_label");
             sb.append('\n');
 
-            for (JsonValue road: roadsArray) {
+            for (JsonValue road: staticGraph) {
                 JsonObject roadObject = road.asJsonObject();
 
                 String roadId = roadObject.getString("road");
-                JsonObject roadDensity = roadsDensityObject.getJsonObject(roadId).getJsonArray("data").getJsonObject(0);
+                JsonObject roadDensity = reconstructionData.getJsonObject(roadId).getJsonArray("data").getJsonObject(0);
 
                 for (JsonValue segment: roadObject.getJsonArray("segments")) {
                     JsonObject segmentObj = segment.asJsonObject();
@@ -53,8 +50,6 @@ public class CSVExtractor {
                 }
             }
             writer.write(sb.toString());
-
-            System.out.println("[CSVExtractor] Done!");
         }
     }
 
@@ -106,29 +101,5 @@ public class CSVExtractor {
         } else {
             return "red";
         }
-    }
-
-    // Parse roadsNew.json
-    // Order is Array -> String -> Array
-    private static JsonArray getRoads(String input) throws FileNotFoundException {
-        InputStream inputStream = new FileInputStream(input);
-        JsonReader reader = Json.createReader(inputStream);
-        String mainArrayString = reader.readArray().getJsonString(0).getString();
-        reader = Json.createReader(new StringReader(mainArrayString));
-        JsonArray roadsArray = reader.readArray();
-        reader.close();
-        return roadsArray;
-    }
-
-    // Parse roadsDensityNew.json
-    // Order is Array -> String -> Object
-    private static JsonObject getRoadsDensity(String input) throws FileNotFoundException {
-        InputStream inputStream = new FileInputStream(input);
-        JsonReader reader = Json.createReader(inputStream);
-        String mainArrayString = reader.readArray().getJsonString(0).getString();
-        reader = Json.createReader(new StringReader(mainArrayString));
-        JsonObject roadsDensityObject = reader.readObject();
-        reader.close();
-        return roadsDensityObject;
     }
 }

@@ -33,6 +33,7 @@ public class SHPExtractor {
         builder.setName("Traffic Reconstruction");
         builder.setCRS(DefaultGeographicCRS.WGS84); // Coordinate reference system
 
+        // Add the LineString geometry type
         builder.add("Segment", LineString.class);
 
         // Metadata
@@ -66,7 +67,7 @@ public class SHPExtractor {
                 if (line.trim().length() > 0) { // skip blank lines
                     String[] tokens = line.split(",");
 
-                    // Extract metadata
+                    // Extract segment metadata
                     String segmentId = tokens[0];
                     String roadId = tokens[1];
                     double startLat = Double.parseDouble(tokens[2]);
@@ -79,7 +80,7 @@ public class SHPExtractor {
                     String trafficLabel = tokens[9];
 
                     // Create LineString geometry type
-                    Coordinate[] coords = {new Coordinate(startLong, startLat), new Coordinate(endLong, endLat)};
+                    Coordinate[] coords = { new Coordinate(startLong, startLat), new Coordinate(endLong, endLat) };
                     LineString lineString = geometryFactory.createLineString(coords);
 
                     // Add line string
@@ -104,11 +105,9 @@ public class SHPExtractor {
             }
         }
 
-        // Get an output file name and write the shapefile
+        // Write the Shapefile
         System.out.println("[SHPExtractor] Writing output to " + outputShp);
-        File outputFile = new File(outputShp);
-        SHPWriter writer = new SHPWriter(outputFile);
+        SHPWriter writer = new SHPWriter(new File(outputShp));
         writer.writeFeatures(DataUtilities.collection(collection));
-        System.out.println("[SHPExtractor] Done!");
     }
 }

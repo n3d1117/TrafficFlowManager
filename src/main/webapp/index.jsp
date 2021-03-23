@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<a href="upload">Upload Layer Servlet</a>
+<a href="api/upload">Upload Layer API</a>
 
 </body>
 </html>
