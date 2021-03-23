@@ -13,7 +13,7 @@ import javax.json.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 
-@WebServlet(name = "uploadLayerServlet", value = "/api/upload")
+@WebServlet(name = "UploadLayerServlet", value = "/api/upload")
 public class UploadLayerServlet extends HttpServlet {
 
     /**

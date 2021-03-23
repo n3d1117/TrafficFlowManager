@@ -1,6 +1,5 @@
 package it.ned.TrafficFlowManager.persistence;
 
-import javax.json.JsonArray;
 import javax.json.JsonValue;
 import java.io.FileNotFoundException;
 

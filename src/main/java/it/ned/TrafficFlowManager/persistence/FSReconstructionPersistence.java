@@ -44,4 +44,12 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
             e.printStackTrace();
         }
     }
+
+    @Override
+    public JsonArray allLayers() throws IOException {
+        System.out.println("[DB] Retrieving all layers...");
+        try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
+            return Json.createReader(inputStream).readArray();
+        }
+    }
 }
