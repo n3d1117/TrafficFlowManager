@@ -21,7 +21,7 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
     }
 
     @Override
-    public void addEntry(JsonObject metadata) {
+    public void addEntry(JsonObject metadata) throws IOException {
         System.out.println("[DB] Adding entry...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
 
@@ -34,14 +34,12 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
             builder.add(metadata);
             JsonArray newArray = builder.build();
 
-            FileWriter fileWriter = new FileWriter(jsonDatabasePath);
-            fileWriter.write(newArray.toString());
-            fileWriter.flush();
-            fileWriter.close();
+            try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
+                fileWriter.write(newArray.toString());
+                fileWriter.flush();
+            }
 
             System.out.println("[DB] Done!");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

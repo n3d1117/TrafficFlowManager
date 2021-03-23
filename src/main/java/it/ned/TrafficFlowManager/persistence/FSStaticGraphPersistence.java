@@ -15,14 +15,12 @@ public class FSStaticGraphPersistence implements StaticGraphPersistenceInterface
     }
 
     @Override
-    public void saveStaticGraph(String staticGraphName, JsonValue json) {
+    public void saveStaticGraph(String staticGraphName, JsonValue json) throws IOException {
         System.out.println("[SDB] Saving static graph " + staticGraphName);
         String filename = staticGraphFolder + "/" + staticGraphName + ".json";
         try (FileWriter file = new FileWriter(filename)) {
             file.write(json.toString());
             file.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
