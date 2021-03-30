@@ -13,8 +13,8 @@ public class ConfigProperties {
      */
     public static Properties getProperties() throws IOException {
         Properties prop = new Properties();
-        // TODO read this file from outside without recompiling
-        FileInputStream file = new FileInputStream("/Users/ned/Documents/unifi/BIG_DATA_ARCHITECTURES/TrafficFlowManager/src/main/resources/config.properties");
+        // FileInputStream file = new FileInputStream("/Users/ned/Documents/unifi/BIG_DATA_ARCHITECTURES/TrafficFlowManager/src/main/resources/config.properties");
+        FileInputStream file = new FileInputStream("/home/ned/TrafficFlowManager/TrafficFlowManager.properties");
         prop.load(file);
         return prop;
     }

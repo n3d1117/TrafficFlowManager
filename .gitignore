@@ -1,7 +1,6 @@
 .DS_Store
 /.idea
 *.csv
-/target
 *.json
 *.iml
 *.dbf
@@ -11,3 +10,6 @@
 *.shx
 *.zip
 *.paw
+*.class
+*.jar
+/Backend & APIs/target
