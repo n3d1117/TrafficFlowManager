@@ -59,10 +59,6 @@ $count = count($list_api);
 
 <style>
 
-    #trafficflow_table {
-        margin-bottom: 0;
-    }
-
 </style>
 
 <body class="guiPageBody">
@@ -89,7 +85,6 @@ $count = count($list_api);
                                     <th><div><a>Unit of Measure</a></div></th>
                                     <th><div><a>ColorMap</a></div></th>
                                     <th><div><a>Static Graph Name</a></div></th>
-                                    <th><div><a>Delete</a></div></th>
                                 </tr>
                             </thead>
 
@@ -108,7 +103,6 @@ $count = count($list_api);
                                 echo("<td>" . $list_api[$i]->unitOfMeasure . "</td>");
                                 echo("<td>" . $list_api[$i]->colorMap . "</td>");
                                 echo("<td>" . $list_api[$i]->staticGraphName . "</td>");
-                                echo("<td><button type='button' class='delDashBtn del_metdata' data-target='#delete-modal' data-toggle='modal' value='". $list_api[$i]->fluxName ."'>DEL</button></td>");
                                 echo("</tr>");
                             }
                             ?>
@@ -120,6 +114,31 @@ $count = count($list_api);
         </div>
     </div>
 
+    <!-- JavaScript -->
+    <script type='text/javascript'>
+        $(document).ready(function() {
+            $('#trafficflow_table').DataTable({
+                "searching": true,
+                "paging": true,
+                "ordering": true,
+                "info": false,
+                "responsive": true,
+                "lengthMenu": [5, 10, 15],
+                "iDisplayLength": 10,
+                "pagingType": "full_numbers",
+                "dom": '<"pull-left"l><"pull-right"f>tip',
+                "language": {
+                    "paginate": {
+                        "first": "First",
+                        "last": "Last",
+                        "next": "Next >>",
+                        "previous": "<< Prev"
+                    },
+                    "lengthMenu": "Show	_MENU_ ",
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 
