@@ -5,6 +5,7 @@ import javax.json.JsonObject;
 import java.io.IOException;
 
 public interface ReconstructionPersistenceInterface {
-    void addEntry(JsonObject metadata) throws IOException;
+    void addEntry(JsonObject metadata, String layerName) throws IOException;
     JsonArray allLayers() throws IOException;
+    JsonArray layers(String fluxName) throws IOException;
 }

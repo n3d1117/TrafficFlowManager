@@ -140,7 +140,7 @@ public class UploadLayerServlet extends HttpServlet {
         convertToShapefileAndUpload(layerName, staticDataGraph, reconstructionData);
 
         // Add entry to db
-        new FSReconstructionPersistence().addEntry(metadata);
+        new FSReconstructionPersistence().addEntry(metadata, layerName);
 
         // Done! Return final layer name
         return layerName;
