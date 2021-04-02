@@ -31,8 +31,15 @@ public class CSVExtractor {
                     String startLon = segmentObj.getJsonObject("start").getString("long");
                     String endLat = segmentObj.getJsonObject("end").getString("lat");
                     String endLon = segmentObj.getJsonObject("end").getString("long");
-                    Integer lanes = Integer.parseInt(segmentObj.getString("lanes"));
                     Integer fipili = segmentObj.getInt("FIPILI");
+
+                    // Field "lanes" could be either a String or an Integer
+                    Integer lanes;
+                    if (segmentObj.get("lanes").getValueType() == JsonValue.ValueType.NUMBER)
+                        lanes = segmentObj.getInt("lanes");
+                    else
+                        lanes = Integer.parseInt(segmentObj.getString("lanes"));
+
                     String trafficValue = roadDensity.getString(segmentId);
                     String trafficLabel = extractTrafficLabel(trafficValue, lanes, fipili);
 
