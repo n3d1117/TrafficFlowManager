@@ -29,10 +29,15 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
             JsonArray mainArray = reader.readArray();
 
             JsonArrayBuilder builder = Json.createArrayBuilder();
-            for (JsonValue existingValue: mainArray)
-                builder.add(existingValue);
-            builder.add(metadata);
-            JsonArray newArray = builder.build();
+            JsonArray newArray;
+            if (mainArray.contains(metadata)) {
+                newArray = mainArray;
+            } else {
+                for (JsonValue existingValue: mainArray)
+                    builder.add(existingValue);
+                builder.add(metadata);
+                newArray = builder.build();
+            }
 
             try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
                 fileWriter.write(newArray.toString());
