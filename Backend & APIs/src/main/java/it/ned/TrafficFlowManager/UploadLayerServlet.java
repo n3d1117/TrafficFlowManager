@@ -1,7 +1,7 @@
 package it.ned.TrafficFlowManager;
 
-import it.ned.TrafficFlowManager.persistence.FSReconstructionPersistence;
-import it.ned.TrafficFlowManager.persistence.FSStaticGraphPersistence;
+import it.ned.TrafficFlowManager.persistence.JSONReconstructionPersistence;
+import it.ned.TrafficFlowManager.persistence.JSONStaticGraphPersistence;
 import it.ned.TrafficFlowManager.utils.*;
 import org.apache.commons.io.FileUtils;
 
@@ -106,7 +106,7 @@ public class UploadLayerServlet extends HttpServlet {
 
         // Save static graph to disk
         System.out.println("[Servlet] Saving static graph " + staticGraphName);
-        new FSStaticGraphPersistence().saveStaticGraph(staticGraphName, json);
+        new JSONStaticGraphPersistence().saveStaticGraph(staticGraphName, json);
     }
 
     private String handleReconstruction(JsonValue json) throws Exception {
@@ -123,7 +123,7 @@ public class UploadLayerServlet extends HttpServlet {
 
         // Get associated static graph array data
         String associatedStaticGraphName = metadata.getString("staticGraphName");
-        JsonValue staticGraph = new FSStaticGraphPersistence().getStaticGraph(associatedStaticGraphName);
+        JsonValue staticGraph = new JSONStaticGraphPersistence().getStaticGraph(associatedStaticGraphName);
         String staticGraphArrayString = staticGraph.asJsonArray().getJsonString(0).getString();
         JsonReader staticGraphReader = Json.createReader(new StringReader(staticGraphArrayString));
         JsonArray staticDataGraph = staticGraphReader.readObject().getJsonArray("dataGraph");
@@ -140,7 +140,7 @@ public class UploadLayerServlet extends HttpServlet {
         convertToShapefileAndUpload(layerName, staticDataGraph, reconstructionData);
 
         // Add entry to db
-        new FSReconstructionPersistence().addEntry(metadata, layerName);
+        new JSONReconstructionPersistence().addEntry(metadata, layerName);
 
         // Done! Return final layer name
         return layerName;

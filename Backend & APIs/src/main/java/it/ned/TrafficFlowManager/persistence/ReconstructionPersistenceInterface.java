@@ -8,4 +8,5 @@ public interface ReconstructionPersistenceInterface {
     void addEntry(JsonObject metadata, String layerName) throws IOException;
     JsonArray allLayersClustered() throws IOException;
     JsonArray layersForFluxName(String fluxName) throws IOException;
+    void changeColorMapForFluxName(String fluxName, String colorMap) throws IOException;
 }

@@ -1,9 +1,29 @@
 <!DOCTYPE html>
 
 <?php
+
+// METADATA API
 $url_api='http://192.168.1.110:8080/trafficflowmanager/api/metadata';
 $json_api = file_get_contents($url_api);
 $list_api = json_decode($json_api);
+
+// QUERY COLOR MAPS
+include('external_service.php');
+$link = mysqli_connect($host_heatmap, $username_heatmap, $password_heatmap) or die("failed to connect to server !!");
+mysqli_set_charset($link, 'utf8');
+mysqli_select_db($link, $dbname_heatmap);
+$process_cm = array();
+$query_cm = "SELECT DISTINCT metric_name FROM heatmap.colors";
+$result_cm = mysqli_query($link, $query_cm) or die(mysqli_error($link));
+if ($result_cm->num_rows >0){
+    while ($row_cm = mysqli_fetch_assoc($result_cm)) {
+        $listFile_cm = array(
+            "metric_name" => $row_cm['metric_name']
+        );
+        array_push($process_cm, $listFile_cm);
+    }
+    $total_cm=$result_cm->num_rows;
+}
 ?>
 
 <html lang="en">
@@ -125,8 +145,8 @@ $list_api = json_decode($json_api);
                                     <th><div><a>Instances</a></div></th>
                                     <th><div><a>View Data</a></div></th>
                                     <th><div><a>Metric</a></div></th>
-                                    <th><div><a>Unit of Measure</a></div></th>
                                     <th><div><a>ColorMap</a></div></th>
+                                    <th><div><a>Unit of Measure</a></div></th>
                                     <th><div><a>Static Graph Name</a></div></th>
                                 </tr>
                             </thead>
@@ -143,8 +163,12 @@ $list_api = json_decode($json_api);
                                 echo("<td>" . $list_api[$i]->instances . "</td>");
                                 echo("<td><button type='button' class='viewDashBtn viewList' data-target='#view-modal' data-toggle='modal' value='".$list_api[$i]->fluxName."'>VIEW</button></td>");
                                 echo("<td>" . $list_api[$i]->metricName . "</td>");
+                                echo("<td>
+                                        <button type='button' class='viewDashBtn viewType' data-target='#typology-modal' data-toggle='modal' value='". $list_api[$i]->colorMap ."'>VIEW</button>  
+									    <button type='button' class='editDashBtn editColor' data-target='#edit-colormap' data-toggle='modal' map_name='". $list_api[$i]->fluxName ."' value='". $list_api[$i]->colorMap ."'>EDIT</button>
+										<p style='display: inline; margin-left: 2%;'>". $list_api[$i]->colorMap ."</p>
+									  </td>");
                                 echo("<td>" . $list_api[$i]->unitOfMeasure . "</td>");
-                                echo("<td>" . $list_api[$i]->colorMap . "</td>");
                                 echo("<td>" . $list_api[$i]->staticGraphName . "</td>");
                                 echo("</tr>");
                             }
@@ -153,7 +177,7 @@ $list_api = json_decode($json_api);
                         </table>
                     </div>
 
-                    <!-- View Modal -->
+                    <!-- View Data Modal -->
                     <div class="modal fade bd-example-modal-lg" id="view-modal" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <form name="View Metadata" method="post" action="#" id="list_Heatmap">
@@ -187,7 +211,74 @@ $list_api = json_decode($json_api);
                             </form>
                         </div>
                     </div>
-                    <!-- -->
+
+                    <!-- View Color Map Modal -->
+                    <div class="modal fade bd-example-modal-lg" id="typology-modal" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form name="View Color Map" method="post" action="#" id="typology_Heatmap">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background-color: white" id="typology_header">Color map </div>
+                                    <div class="modal-body" style="background-color: white">
+                                        <div>
+                                            <table id="typology_table" class="table table-striped table-bordered" style="width: 100%;">
+                                                <thead class="dashboardsTableHeader">
+                                                <th class="min">
+                                                    <div><a>Minimum</a></div>
+                                                </th>
+                                                <th class="max">
+                                                    <div><a>Maximum</a></div>
+                                                </th>
+                                                <th class="rgb">
+                                                    <div><a>Rgb</a></div>
+                                                </th>
+                                                <th class="color">
+                                                    <div><a>Color</a></div>
+                                                </th>
+                                                <th class="order">
+                                                    <div><a>Order</a></div>
+                                                </th>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer" style="background-color: white">
+                                        <button type="button" class="btn cancelBtn" id="typology_close" data-dismiss="modal">Cancel</button>
+                                        <!--<input type="submit" value="Confirm" class="btn confirmBtn"/>-->
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Edit Color Map Modal -->
+                    <div class="modal fade bd-example-modal-lg" id="edit-colormap" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-sm">
+                            <form name="Edit Color Map" method="post" action="#" id="color_Heatmap">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background-color: white" id="color_header">Select Color map: </div>
+                                    <div class="modal-body" style="background-color: white">
+                                        <input type="text" id="id_colormap" class="hidden">
+                                        <div class="form-group">
+                                            <label for="exampleFormControlSelect1">Select Color Map:</label>
+                                            <select class="form-control" id="colorMapList">
+                                                <?php
+                                                for ($z=0; $z<$total_cm; $z++) {
+                                                    echo('<option>'.$process_cm[$z]['metric_name'].'</option>');
+                                                }
+                                                ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer" style="background-color: white">
+                                        <button type="button" class="btn cancelBtn" id="color_close" data-dismiss="modal">Cancel</button>
+                                        <input type="button" value="Confirm" class="btn confirmBtn" id="edit_color_map"/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -284,6 +375,97 @@ $list_api = json_decode($json_api);
                     }
 
                 });
+            });
+
+            // Function called when clicking 'View' in COLOR MAP column
+            $(document).on('click', '.viewType', function() {
+                var metric = $(this).val();
+                $('#typology_header').text('Color Map:	' + metric);
+                var array = new Array();
+                $.ajax({
+                    url: 'get_heatmap.php',
+                    data: {
+                        metric: metric,
+                        action: 'color_map'
+                    },
+                    type: "POST",
+                    async: true,
+                    dataType: 'json',
+                    success: function(data) {
+
+                        for (var i = 0; i < data.length; i++) {
+                            var data_id = data[i]['id'];
+                            var rgb = data[i]['rgb'];
+                            var color = data[i]['color'];
+                            var order = data[i]['order'];
+                            var min = data[i]['min'];
+                            var max = data[i]['max'];
+                            if (min == null) {
+                                min = '';
+                            }
+                            if (max == null) {
+                                max = '';
+                            }
+
+                            rgb0 = rgb.replace("[", "(");
+                            rgb = rgb0.replace("]", ")");
+
+                            $('#typology_table tbody').append('<tr><td>' + min + '</td><td>' + max + '</td><td>' + rgb + ' <p><i class="fa fa-circle" style="color: rgb' + rgb + '"></i></p></td><td>' + color + '</td><td>' + order + '</td></tr>');
+                        }
+                        //
+                        var table2 = $('#typology_table').DataTable({
+                            "searching": false,
+                            "paging": false,
+                            "ordering": false,
+                            "info": false,
+                            "responsive": true,
+                            "bDestroy": true
+                        });
+                        //
+
+                    }
+                });
+            });
+
+            // Function called when dismissing VIEW COLOR MAP modal
+            $(document).on('click', '#typology_close', function() {
+                $('#typology_table tbody').empty();
+            });
+
+            // Function called when clicking 'Edit' in COLOR MAP column
+            $(document).on('click', '.editColor', function() {
+                var metric = $(this).val();
+                var map_name = $(this).attr('map_name');
+                $('#color_header').text('Edit Color Map:	' + map_name);
+                $('#id_colormap').val(map_name);
+                $('#colorMapList').val(metric);
+            });
+
+            // Function called when confirming EDIT COLOR MAP action
+            $(document).on('click', '#edit_color_map', function() {
+                var valore = $('#colorMapList').val();
+                var id= $('#id_colormap').val();
+                console.log(id);
+                console.log(valore);
+                $.ajax({
+                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    data: {
+                        id: id,
+                        valore: valore,
+                        action: 'change_color_map'
+                    },
+                    type: "POST",
+                    async: true,
+                    success: function() {
+                        $('#color_Heatmap').modal('hide');
+                        location.reload();
+                    }
+                });
+            });
+
+            // Function called when dismissing EDIT COLOR MAP modal
+            $(document).on('click', '#color_close', function() {
+                $('#colormap_table tbody').empty();
             });
         });
 

@@ -9,11 +9,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class FSReconstructionPersistence implements ReconstructionPersistenceInterface {
+public class JSONReconstructionPersistence implements ReconstructionPersistenceInterface {
 
     private final String jsonDatabasePath;
 
-    public FSReconstructionPersistence() throws IOException {
+    public JSONReconstructionPersistence() throws IOException {
         jsonDatabasePath = ConfigProperties.getProperties().getProperty("db");
 
         if (!new File(jsonDatabasePath).exists()) {
@@ -106,11 +106,47 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
         }
     }
 
+    @Override
+    public void changeColorMapForFluxName(String fluxName, String newColorMap) throws IOException {
+        System.out.println("[DB] Changing color map to " + newColorMap + " for fluxName " + fluxName + "...");
+
+        try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
+            JsonArray array = Json.createReader(inputStream).readArray();
+
+            // Substitute value
+            JsonArrayBuilder builder = Json.createArrayBuilder();
+            for (JsonValue value: array) {
+                if (value.asJsonObject().getString("fluxName").equals(fluxName)) {
+                    builder.add(substituteValueToObject(value.asJsonObject(), "colorMap", newColorMap));
+                } else {
+                    builder.add(value);
+                }
+            }
+
+            // Write changes to file
+            try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
+                fileWriter.write(builder.build().toString());
+                fileWriter.flush();
+            }
+        }
+    }
+
     private JsonObject appendKeyValueToObject(JsonObject obj, String key, String value) {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         for (Map.Entry<String, JsonValue> entry : obj.entrySet())
             builder.add(entry.getKey(), entry.getValue());
         builder.add(key,value);
+        return builder.build();
+    }
+
+    private JsonObject substituteValueToObject(JsonObject obj, String key, String newValue) {
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        for (Map.Entry<String, JsonValue> entry : obj.entrySet()) {
+            if (entry.getKey().equals(key))
+                builder.add(key, newValue);
+            else
+                builder.add(entry.getKey(), entry.getValue());
+        }
         return builder.build();
     }
 }

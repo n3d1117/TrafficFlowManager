@@ -5,11 +5,11 @@ import it.ned.TrafficFlowManager.utils.ConfigProperties;
 import javax.json.*;
 import java.io.*;
 
-public class FSStaticGraphPersistence implements StaticGraphPersistenceInterface {
+public class JSONStaticGraphPersistence implements StaticGraphPersistenceInterface {
 
     private final String staticGraphFolder;
 
-    public FSStaticGraphPersistence() throws IOException {
+    public JSONStaticGraphPersistence() throws IOException {
         staticGraphFolder = ConfigProperties.getProperties().getProperty("staticGraphsFolder");
         new File(staticGraphFolder).mkdir();
     }
