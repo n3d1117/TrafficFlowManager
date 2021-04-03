@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
 <?php
-$url_api='http://192.168.1.110:8080/trafficflowmanager/api/layers';
+$url_api='http://192.168.1.110:8080/trafficflowmanager/api/metadata';
 $json_api = file_get_contents($url_api);
 $list_api = json_decode($json_api);
 $count = count($list_api);
@@ -59,6 +59,47 @@ $count = count($list_api);
 
 <style>
 
+    .hidden {
+        display: none;
+    }
+
+    #view-modal {
+        width: auto;
+    }
+
+    #value_table {
+        width: 100%;
+    }
+
+    td {
+        vertical-align: middle;
+    }
+
+    #trafficflow_table {
+        margin-bottom: 0px;
+    }
+
+    .loader {
+        border: 16px solid #f3f3f3; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+        position: absolute;
+        left: 50%;
+        right: 50%;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .active {
+        background-color: rgba(138, 159, 168, 1);
+    }
+
 </style>
 
 <body class="guiPageBody">
@@ -79,8 +120,8 @@ $count = count($list_api);
                                     <th><div><a>Locality</a></div></th>
                                     <th><div><a>Organization</a></div></th>
                                     <th><div><a>Scenario</a></div></th>
-                                    <th><div><a>Date</a></div></th>
-                                    <th><div><a>Duration</a></div></th>
+                                    <th><div><a>Instances</a></div></th>
+                                    <th><div><a>View Data</a></div></th>
                                     <th><div><a>Metric</a></div></th>
                                     <th><div><a>Unit of Measure</a></div></th>
                                     <th><div><a>ColorMap</a></div></th>
@@ -97,8 +138,8 @@ $count = count($list_api);
                                 echo("<td>" . $list_api[$i]->locality . "</td>");
                                 echo("<td>" . $list_api[$i]->organization . "</td>");
                                 echo("<td>" . $list_api[$i]->scenarioID . "</td>");
-                                echo("<td>" . $list_api[$i]->dateTime . "</td>");
-                                echo("<td>" . $list_api[$i]->duration . "</td>");
+                                echo("<td>" . $list_api[$i]->instances . "</td>");
+                                echo("<td><button type='button' class='viewDashBtn viewList' data-target='#view-modal' data-toggle='modal' value='".$list_api[$i]->fluxName."'>VIEW</button></td>");
                                 echo("<td>" . $list_api[$i]->metricName . "</td>");
                                 echo("<td>" . $list_api[$i]->unitOfMeasure . "</td>");
                                 echo("<td>" . $list_api[$i]->colorMap . "</td>");
@@ -109,6 +150,42 @@ $count = count($list_api);
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- View Modal -->
+                    <div class="modal fade bd-example-modal-lg" id="view-modal" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <form name="View Metadata" method="post" action="#" id="list_Heatmap">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background-color: white" id="list_header">Traffic Flow Instances List: </div>
+                                    <div class="modal-body" style="background-color: white">
+                                        <div>
+                                            <table id="value_table" class="table table-striped table-bordered" style="width: 100%;">
+                                                <thead class="dashboardsTableHeader">
+                                                    <th><div><a>Date</a></div></th>
+                                                    <th><div><a>Duration</a></div></th>
+                                                    <th><div><a>Layer Name</a></div></th>
+                                                    <th><div><a>Delete</a></div></th>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div>
+                                            <p id="data_content"></p>
+                                        </div>
+                                    </div>
+                                    <div class="loader"></div>
+                                    <p id="corrent" style="display:none;"></p>
+                                    <div id="link_list" style="text-align: center;">
+                                    </div>
+                                    <div class="modal-footer" style="background-color: white">
+                                        <button type="button" class="btn cancelBtn" id="list_close" data-dismiss="modal">Cancel</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- -->
                 </div>
             </div>
         </div>
@@ -137,7 +214,76 @@ $count = count($list_api);
                     "lengthMenu": "Show	_MENU_ ",
                 }
             });
+
+            // Function called when clicking 'View' in VIEW DATA column
+            $(document).on('click', '.viewList', function() {
+
+                const flux_name = $(this).val();
+                $('#list_header').text('Traffic Flow Instances List: ' + flux_name);
+                $('.loader').show();
+
+                // Call API
+                $.ajax({
+                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    data: {
+                        fluxName: flux_name
+                    },
+                    type: "GET",
+                    async: true,
+                    dataType: 'json',
+                    success: function(data) {
+
+                        // Destroy previous table, if any
+                        if ( $.fn.dataTable.isDataTable( '#value_table' ) ) {
+                            $('#value_table').DataTable().destroy();
+                        }
+                        // Empty previous content
+                        $('#value_table tbody').empty();
+                        $('#data_content').empty();
+
+                        // Hide loader
+                        $('.loader').hide();
+
+                        // Show data
+                        if (data.length > 0) {
+                            for (let i = 0; i < data.length; i++) {
+                                $('#value_table tbody').append('<tr><td>' + data[i]['dateTime'] + '</td><td>' + data[i]['duration'] + '</td><td>' + data[i]['layerName'] + '</td><td><button type="button" class="delDashBtn det_data" data-target="#data_elimination" data-toggle="modal">DEL</button></td></tr>');
+                            }
+                        } else {
+                            $('#data_content').append('<div class="panel panel-default"><div class="panel-body">There is no data</div></div>');
+                        }
+
+                        // Use DataTable for paging and ordering
+                        $('#value_table').DataTable({
+                            "searching": false,
+                            "paging": true,
+                            "ordering": true,
+                            "info": false,
+                            "responsive": true,
+                            "lengthMenu": [5, 10, 15],
+                            "iDisplayLength": 10,
+                            "pagingType": "full_numbers",
+                            "dom": '<"pull-left"l><"pull-right"f>tip',
+                            "language": {
+                                "paginate": {
+                                    "first": "First",
+                                    "last": "Last",
+                                    "next": "Next >>",
+                                    "previous": "<< Prev"
+                                },
+                                "lengthMenu": "Show	_MENU_ ",
+                            }
+                        });
+                    },
+                    error: function() {
+                        $('.loader').hide();
+                        $('#data_content').append('<div class="panel panel-default"><div class="panel-body">Error when loading data</div></div>');
+                    }
+
+                });
+            });
         });
+
     </script>
 </body>
 </html>
