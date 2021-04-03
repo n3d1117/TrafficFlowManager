@@ -4,11 +4,11 @@
 $url_api='http://192.168.1.110:8080/trafficflowmanager/api/metadata';
 $json_api = file_get_contents($url_api);
 $list_api = json_decode($json_api);
-$count = count($list_api);
 ?>
 
 <html lang="en">
 
+<!-- HEAD -->
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -57,6 +57,7 @@ $count = count($list_api);
 
 </head>
 
+<!-- STYLE -->
 <style>
 
     .hidden {
@@ -102,6 +103,7 @@ $count = count($list_api);
 
 </style>
 
+<!-- BODY -->
 <body class="guiPageBody">
 
     <!-- Main content -->
@@ -132,7 +134,7 @@ $count = count($list_api);
                             <!-- Rows -->
                             <tbody>
                             <?php
-                            for ($i = 0; $i < $count; $i++) {
+                            for ($i = 0; $i < count($list_api); $i++) {
                                 echo("<tr>");
                                 echo("<td>" . $list_api[$i]->fluxName . "</td>");
                                 echo("<td>" . $list_api[$i]->locality . "</td>");
@@ -194,6 +196,7 @@ $count = count($list_api);
     <!-- JavaScript -->
     <script type='text/javascript'>
         $(document).ready(function() {
+
             $('#trafficflow_table').DataTable({
                 "searching": true,
                 "paging": true,
@@ -285,6 +288,8 @@ $count = count($list_api);
         });
 
     </script>
+
 </body>
+
 </html>
 
