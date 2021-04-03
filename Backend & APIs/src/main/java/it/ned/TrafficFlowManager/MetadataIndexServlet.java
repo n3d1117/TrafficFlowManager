@@ -11,16 +11,17 @@ import java.io.IOException;
 public class MetadataIndexServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.addHeader("Access-Control-Allow-Origin", "*");
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
-        String fluxName = request.getParameter("dataset");
+        String fluxName = request.getParameter("fluxName");
 
         JsonArray result;
         if (fluxName == null) {
-            result = new FSReconstructionPersistence().allLayers();
+            result = new FSReconstructionPersistence().allLayersClustered();
         } else {
-            result = new FSReconstructionPersistence().layers(fluxName);
+            result = new FSReconstructionPersistence().layersForFluxName(fluxName);
         }
         response.getWriter().write(result.toString());
         response.getWriter().close();

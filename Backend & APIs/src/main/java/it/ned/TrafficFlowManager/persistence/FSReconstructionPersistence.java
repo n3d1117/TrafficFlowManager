@@ -5,7 +5,9 @@ import it.ned.TrafficFlowManager.utils.ConfigProperties;
 import javax.json.*;
 import javax.json.stream.JsonCollectors;
 import java.io.*;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class FSReconstructionPersistence implements ReconstructionPersistenceInterface {
 
@@ -27,12 +29,13 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
         System.out.println("[DB] Adding entry for layer " + layerName + "...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
 
+            // Append layer name to metadata object
             JsonObject newMetadata = appendKeyValueToObject(metadata, "layerName", layerName);
 
+            // Append object and build response array
             JsonReader reader = Json.createReader(inputStream);
             JsonArray mainArray = reader.readArray();
             reader.close();
-
             JsonArrayBuilder builder = Json.createArrayBuilder();
             JsonArray newArray;
             if (mainArray.contains(newMetadata)) {
@@ -44,6 +47,7 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
                 newArray = builder.build();
             }
 
+            // Write response
             try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
                 fileWriter.write(newArray.toString());
                 fileWriter.flush();
@@ -54,15 +58,44 @@ public class FSReconstructionPersistence implements ReconstructionPersistenceInt
     }
 
     @Override
-    public JsonArray allLayers() throws IOException {
-        System.out.println("[DB] Retrieving all layers...");
+    public JsonArray allLayersClustered() throws IOException {
+        System.out.println("[DB] Retrieving all layers clustered...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
-            return Json.createReader(inputStream).readArray();
+
+            JsonArray array = Json.createReader(inputStream).readArray();
+            JsonBuilderFactory factory = Json.createBuilderFactory(null);
+            JsonArrayBuilder builder = Json.createArrayBuilder();
+
+            Set<String> set = new HashSet<>();
+            array.forEach(item -> {
+                String fluxName = item.asJsonObject().getString("fluxName");
+                if (set.add(fluxName)) {
+                    long instances = array
+                            .stream()
+                            .filter(jsonValue -> jsonValue.asJsonObject().getString("fluxName").equals(fluxName))
+                            .count();
+                    builder.add(factory.createObjectBuilder()
+                            .add("fluxName", fluxName)
+                            .add("locality", item.asJsonObject().getString("locality"))
+                            .add("organization", item.asJsonObject().getString("organization"))
+                            .add("scenarioID", item.asJsonObject().getString("scenarioID"))
+                            .add("colorMap", item.asJsonObject().getString("colorMap"))
+                            .add("instances", instances)
+                            .add("locality", item.asJsonObject().getString("locality"))
+                            .add("metricName", item.asJsonObject().getString("metricName"))
+                            .add("unitOfMeasure", item.asJsonObject().getString("unitOfMeasure"))
+                            .add("staticGraphName", item.asJsonObject().getString("staticGraphName"))
+                    );
+                }
+
+            });
+
+            return builder.build();
         }
     }
 
     @Override
-    public JsonArray layers(String fluxName) throws IOException {
+    public JsonArray layersForFluxName(String fluxName) throws IOException {
         System.out.println("[DB] Retrieving all layers for fluxName " + fluxName + "...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
             JsonArray array = Json.createReader(inputStream).readArray();

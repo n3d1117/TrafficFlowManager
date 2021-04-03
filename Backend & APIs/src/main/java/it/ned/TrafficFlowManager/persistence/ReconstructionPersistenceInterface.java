@@ -6,6 +6,6 @@ import java.io.IOException;
 
 public interface ReconstructionPersistenceInterface {
     void addEntry(JsonObject metadata, String layerName) throws IOException;
-    JsonArray allLayers() throws IOException;
-    JsonArray layers(String fluxName) throws IOException;
+    JsonArray allLayersClustered() throws IOException;
+    JsonArray layersForFluxName(String fluxName) throws IOException;
 }
