@@ -9,4 +9,6 @@ public interface ReconstructionPersistenceInterface {
     JsonArray allLayersClustered() throws IOException;
     JsonArray layersForFluxName(String fluxName) throws IOException;
     void changeColorMapForFluxName(String fluxName, String colorMap) throws IOException;
+    void deleteFlux(String fluxName) throws IOException;
+    void deleteLayer(String layerName) throws IOException;
 }

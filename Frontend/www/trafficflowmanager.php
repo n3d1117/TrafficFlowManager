@@ -146,6 +146,7 @@ if ($result_cm->num_rows >0){
                                     <th><div><a>View Data</a></div></th>
                                     <th><div><a>Metric</a></div></th>
                                     <th><div><a>ColorMap</a></div></th>
+                                    <th><div><a>Delete</a></div></th>
                                     <th><div><a>Unit of Measure</a></div></th>
                                     <th><div><a>Static Graph Name</a></div></th>
                                 </tr>
@@ -168,6 +169,7 @@ if ($result_cm->num_rows >0){
 									    <button type='button' class='editDashBtn editColor' data-target='#edit-colormap' data-toggle='modal' map_name='". $list_api[$i]->fluxName ."' value='". $list_api[$i]->colorMap ."'>EDIT</button>
 										<p style='display: inline; margin-left: 2%;'>". $list_api[$i]->colorMap ."</p>
 									  </td>");
+                                echo("<td><button type='button' class='delDashBtn del_metdata' data-target='#delete-modal' data-toggle='modal' value='". $list_api[$i]->fluxName ."'>DEL</button></td>");
                                 echo("<td>" . $list_api[$i]->unitOfMeasure . "</td>");
                                 echo("<td>" . $list_api[$i]->staticGraphName . "</td>");
                                 echo("</tr>");
@@ -279,6 +281,50 @@ if ($result_cm->num_rows >0){
                             </form>
                         </div>
                     </div>
+
+                    <!-- Delete Heatmap Modal -->
+                    <div class="modal fade bd-example-modal-lg" id="delete-modal" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form name="Delete Heatmap" method="post" action="#" id="delete_Heatmap">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background-color: white">Delete Scenario</div>
+                                    <div class="modal-body" style="background-color: white">
+                                        <p id="id_delete_modal_text">Are you sure do you want delete this scenario?</p>
+                                        <div>
+                                            <input type="text" id="id_heat" class="hidden">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer" style="background-color: white">
+                                        <button type="button" class="btn cancelBtn" data-dismiss="modal">Cancel</button>
+                                        <input type="button" value="Confirm" class="btn confirmBtn" id="delete_heatmap" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Delete Data Modal -->
+                    <div class="modal bd-example-modal-lg" id="data_elimination" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form name="Delete Data" method="post" action="#">
+                                <div class="modal-content">
+                                    <div class="modal-header" style="background-color: white" id="colormap_header">Delete Data</div>
+                                    <div class="modal-body" style="background-color: white">
+                                        <p id="id_confirm_delete_data_text">Are you sure do you want delete this Data from the Heatmap?</p>
+                                        <div>
+                                            <input type="text" id="id_layerName" class="hidden">
+                                            <input type="text" id="id_fluxName" class="hidden">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer" style="background-color: white">
+                                        <button type="button" class="btn cancelBtn" id="deleteData_close" data-dismiss="modal">Cancel</button>
+                                        <input type="button" value="Confirm" class="btn confirmBtn" id="confirmDeletedData" />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -311,77 +357,14 @@ if ($result_cm->num_rows >0){
 
             // Function called when clicking 'View' in VIEW DATA column
             $(document).on('click', '.viewList', function() {
-
                 const flux_name = $(this).val();
-                $('#list_header').text('Traffic Flow Instances List: ' + flux_name);
-                $('.loader').show();
-
-                // Call API
-                $.ajax({
-                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
-                    data: {
-                        fluxName: flux_name
-                    },
-                    type: "GET",
-                    async: true,
-                    dataType: 'json',
-                    success: function(data) {
-
-                        // Destroy previous table, if any
-                        if ( $.fn.dataTable.isDataTable( '#value_table' ) ) {
-                            $('#value_table').DataTable().destroy();
-                        }
-                        // Empty previous content
-                        $('#value_table tbody').empty();
-                        $('#data_content').empty();
-
-                        // Hide loader
-                        $('.loader').hide();
-
-                        // Show data
-                        if (data.length > 0) {
-                            for (let i = 0; i < data.length; i++) {
-                                $('#value_table tbody').append('<tr><td>' + data[i]['dateTime'] + '</td><td>' + data[i]['duration'] + '</td><td>' + data[i]['layerName'] + '</td><td><button type="button" class="delDashBtn det_data" data-target="#data_elimination" data-toggle="modal">DEL</button></td></tr>');
-                            }
-                        } else {
-                            $('#data_content').append('<div class="panel panel-default"><div class="panel-body">There is no data</div></div>');
-                        }
-
-                        // Use DataTable for paging and ordering
-                        $('#value_table').DataTable({
-                            "searching": false,
-                            "paging": true,
-                            "ordering": true,
-                            "info": false,
-                            "responsive": true,
-                            "lengthMenu": [5, 10, 15],
-                            "iDisplayLength": 10,
-                            "pagingType": "full_numbers",
-                            "dom": '<"pull-left"l><"pull-right"f>tip',
-                            "language": {
-                                "paginate": {
-                                    "first": "First",
-                                    "last": "Last",
-                                    "next": "Next >>",
-                                    "previous": "<< Prev"
-                                },
-                                "lengthMenu": "Show	_MENU_ ",
-                            }
-                        });
-                    },
-                    error: function() {
-                        $('.loader').hide();
-                        $('#data_content').append('<div class="panel panel-default"><div class="panel-body">Error when loading data</div></div>');
-                    }
-
-                });
+                load_heatmap_data(flux_name);
             });
 
             // Function called when clicking 'View' in COLOR MAP column
             $(document).on('click', '.viewType', function() {
-                var metric = $(this).val();
+                const metric = $(this).val();
                 $('#typology_header').text('Color Map:	' + metric);
-                var array = new Array();
                 $.ajax({
                     url: 'get_heatmap.php',
                     data: {
@@ -413,7 +396,7 @@ if ($result_cm->num_rows >0){
                             $('#typology_table tbody').append('<tr><td>' + min + '</td><td>' + max + '</td><td>' + rgb + ' <p><i class="fa fa-circle" style="color: rgb' + rgb + '"></i></p></td><td>' + color + '</td><td>' + order + '</td></tr>');
                         }
                         //
-                        var table2 = $('#typology_table').DataTable({
+                        $('#typology_table').DataTable({
                             "searching": false,
                             "paging": false,
                             "ordering": false,
@@ -421,8 +404,6 @@ if ($result_cm->num_rows >0){
                             "responsive": true,
                             "bDestroy": true
                         });
-                        //
-
                     }
                 });
             });
@@ -434,8 +415,8 @@ if ($result_cm->num_rows >0){
 
             // Function called when clicking 'Edit' in COLOR MAP column
             $(document).on('click', '.editColor', function() {
-                var metric = $(this).val();
-                var map_name = $(this).attr('map_name');
+                const metric = $(this).val();
+                const map_name = $(this).attr('map_name');
                 $('#color_header').text('Edit Color Map:	' + map_name);
                 $('#id_colormap').val(map_name);
                 $('#colorMapList').val(metric);
@@ -443,10 +424,8 @@ if ($result_cm->num_rows >0){
 
             // Function called when confirming EDIT COLOR MAP action
             $(document).on('click', '#edit_color_map', function() {
-                var valore = $('#colorMapList').val();
-                var id= $('#id_colormap').val();
-                console.log(id);
-                console.log(valore);
+                const valore = $('#colorMapList').val();
+                const id = $('#id_colormap').val();
                 $.ajax({
                     url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
                     data: {
@@ -467,7 +446,127 @@ if ($result_cm->num_rows >0){
             $(document).on('click', '#color_close', function() {
                 $('#colormap_table tbody').empty();
             });
+
+            // Function called when clicking DELETE HEATMAP
+            $(document).on('click', '.del_metdata', function() {
+                const id = $(this).val();
+                $('#id_heat').val(id);
+                $('#id_delete_modal_text').text('Are you sure you want to delete ' + id + '?');
+            });
+
+            // Function called when confirming DELETE HEATMAP action
+            $(document).on('click', '#delete_heatmap', function() {
+                const id_heat = $('#id_heat').val();
+                $.ajax({
+                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    data: {
+                        id: id_heat,
+                        action: 'delete_metadata'
+                    },
+                    type: "POST",
+                    async: true,
+                    success: function() {
+                        $('#delete_Heatmap').modal('hide');
+                        alert('Successfully deleted');
+                        location.reload();
+                    }
+                });
+            });
+
+            // Function called when clicking DELETE DATA inside HEATMAP
+            $(document).on('click', '.det_data', function() {
+                const id = $(this).val();
+                const fluxName = $(this).data('flux');
+                $('#id_layerName').val(id);
+                $('#id_fluxName').val(fluxName);
+                $('#id_confirm_delete_data_text').text('Are you sure do you want delete ' + id + ' from the Heatmap?');
+            });
+
+            // Function called when confirming DELETE DATA in HEATMAP action
+            $(document).on('click', '#confirmDeletedData', function() {
+                const layerName = $('#id_layerName').val();
+                const flux = $('#id_fluxName').val();
+                $.ajax({
+                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    data: {
+                        id: layerName,
+                        action: 'delete_data'
+                    },
+                    type: "POST",
+                    async: true,
+                    success: function() {
+                        $('#data_elimination').modal('hide');
+                        load_heatmap_data(flux);
+                    }
+                });
+            });
         });
+
+        function load_heatmap_data(flux_name) {
+            $('#list_header').text('Traffic Flow Instances List: ' + flux_name);
+            $('.loader').show();
+
+            // Call API
+            $.ajax({
+                url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                data: {
+                    fluxName: flux_name
+                },
+                type: "GET",
+                async: true,
+                dataType: 'json',
+                success: function(data) {
+
+                    // Destroy previous table, if any
+                    if ( $.fn.dataTable.isDataTable( '#value_table' ) ) {
+                        $('#value_table').DataTable().destroy();
+                    }
+
+                    // Empty previous content
+                    $('#value_table tbody').empty();
+                    $('#data_content').empty();
+
+                    // Hide loader
+                    $('.loader').hide();
+
+                    // Show data
+                    for (let i = 0; i < data.length; i++) {
+                        $('#value_table tbody').append('<tr><td>' + data[i]['dateTime'] + '</td><td>' + data[i]['duration'] + '</td><td>' + data[i]['layerName'] + '</td><td><button type="button" class="delDashBtn det_data" data-target="#data_elimination" data-toggle="modal" data-flux=' + data[i]['fluxName'] + ' value=' + data[i]['layerName'] + '>DEL</button></td></tr>');
+                    }
+
+                    // Use DataTable for paging and ordering
+                    $('#value_table').DataTable({
+                        "searching": false,
+                        "paging": true,
+                        "ordering": true,
+                        "info": false,
+                        "responsive": true,
+                        "lengthMenu": [5, 10, 15],
+                        "iDisplayLength": 10,
+                        "pagingType": "full_numbers",
+                        "dom": '<"pull-left"l><"pull-right"f>tip',
+                        "language": {
+                            "paginate": {
+                                "first": "First",
+                                "last": "Last",
+                                "next": "Next >>",
+                                "previous": "<< Prev"
+                            },
+                            "lengthMenu": "Show	_MENU_ ",
+                        }
+                    });
+
+                    // Reload page if no more data to show
+                    if (data.length === 0) {
+                        location.reload();
+                    }
+                },
+                error: function() {
+                    $('.loader').hide();
+                    $('#data_content').append('<div class="panel panel-default"><div class="panel-body">Error when loading data</div></div>');
+                }
+            });
+        }
 
     </script>
 

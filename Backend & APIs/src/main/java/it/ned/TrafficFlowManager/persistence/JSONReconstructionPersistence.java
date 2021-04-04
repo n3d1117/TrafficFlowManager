@@ -66,6 +66,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
             JsonBuilderFactory factory = Json.createBuilderFactory(null);
             JsonArrayBuilder builder = Json.createArrayBuilder();
 
+            // Group by flux name
             Set<String> set = new HashSet<>();
             array.forEach(item -> {
                 String fluxName = item.asJsonObject().getString("fluxName");
@@ -119,6 +120,52 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
                 if (value.asJsonObject().getString("fluxName").equals(fluxName)) {
                     builder.add(substituteValueToObject(value.asJsonObject(), "colorMap", newColorMap));
                 } else {
+                    builder.add(value);
+                }
+            }
+
+            // Write changes to file
+            try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
+                fileWriter.write(builder.build().toString());
+                fileWriter.flush();
+            }
+        }
+    }
+
+    @Override
+    public void deleteFlux(String fluxName) throws IOException {
+        System.out.println("[DB] Deleting flux " + fluxName + "...");
+
+        try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
+            JsonArray array = Json.createReader(inputStream).readArray();
+
+            // Delete value
+            JsonArrayBuilder builder = Json.createArrayBuilder();
+            for (JsonValue value: array) {
+                if (!value.asJsonObject().getString("fluxName").equals(fluxName)) {
+                    builder.add(value);
+                }
+            }
+
+            // Write changes to file
+            try (FileWriter fileWriter = new FileWriter(jsonDatabasePath)) {
+                fileWriter.write(builder.build().toString());
+                fileWriter.flush();
+            }
+        }
+    }
+
+    @Override
+    public void deleteLayer(String layerName) throws IOException {
+        System.out.println("[DB] Deleting layer " + layerName + "...");
+
+        try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
+            JsonArray array = Json.createReader(inputStream).readArray();
+
+            // Delete layer
+            JsonArrayBuilder builder = Json.createArrayBuilder();
+            for (JsonValue value: array) {
+                if (!value.asJsonObject().getString("layerName").equals(layerName)) {
                     builder.add(value);
                 }
             }
