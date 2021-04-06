@@ -13,7 +13,7 @@ public class MetadataIndexServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.addHeader("Access-Control-Allow-Origin", "*");
+        //response.addHeader("Access-Control-Allow-Origin", "*");
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
@@ -32,7 +32,7 @@ public class MetadataIndexServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.addHeader("Access-Control-Allow-Origin", "*");
+        //resp.addHeader("Access-Control-Allow-Origin", "*");
         String action = req.getParameter("action");
 
         ReconstructionPersistenceInterface db = new JSONReconstructionPersistence();

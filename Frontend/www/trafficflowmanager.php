@@ -3,7 +3,7 @@
 <?php
 
 // METADATA API
-$url_api='http://192.168.1.110:8080/trafficflowmanager/api/metadata';
+$url_api='http://192.168.1.115:8080/trafficflowmanager/api/metadata';
 $json_api = file_get_contents($url_api);
 $list_api = json_decode($json_api);
 
@@ -427,7 +427,7 @@ if ($result_cm->num_rows >0){
                 const valore = $('#colorMapList').val();
                 const id = $('#id_colormap').val();
                 $.ajax({
-                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    url: 'http://192.168.1.115:8080/trafficflowmanager/api/metadata',
                     data: {
                         id: id,
                         valore: valore,
@@ -458,7 +458,7 @@ if ($result_cm->num_rows >0){
             $(document).on('click', '#delete_heatmap', function() {
                 const id_heat = $('#id_heat').val();
                 $.ajax({
-                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    url: 'http://192.168.1.115:8080/trafficflowmanager/api/metadata',
                     data: {
                         id: id_heat,
                         action: 'delete_metadata'
@@ -487,7 +487,7 @@ if ($result_cm->num_rows >0){
                 const layerName = $('#id_layerName').val();
                 const flux = $('#id_fluxName').val();
                 $.ajax({
-                    url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                    url: 'http://192.168.1.115:8080/trafficflowmanager/api/metadata',
                     data: {
                         id: layerName,
                         action: 'delete_data'
@@ -508,7 +508,7 @@ if ($result_cm->num_rows >0){
 
             // Call API
             $.ajax({
-                url: 'http://192.168.1.110:8080/trafficflowmanager/api/metadata',
+                url: 'http://192.168.1.115:8080/trafficflowmanager/api/metadata',
                 data: {
                     fluxName: flux_name
                 },

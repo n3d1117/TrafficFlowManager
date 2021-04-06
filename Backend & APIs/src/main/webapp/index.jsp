@@ -7,7 +7,7 @@
 <body>
 
 <a href="api/upload">Upload Layer API</a>
-<a href="api/layers">Layers Index API</a>
+<a href="api/metadata">Metadata Index API</a>
 
 </body>
 </html>
