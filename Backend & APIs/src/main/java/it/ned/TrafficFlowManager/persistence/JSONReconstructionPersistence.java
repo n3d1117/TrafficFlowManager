@@ -103,6 +103,8 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
             return array
                     .stream()
                     .filter(jsonValue -> jsonValue.asJsonObject().getString("fluxName").equals(fluxName))
+                    .sorted((l1, l2)->l2.asJsonObject().getString("dateTime").
+                            compareTo(l1.asJsonObject().getString("dateTime")))
                     .collect(JsonCollectors.toJsonArray());
         }
     }

@@ -538,7 +538,7 @@ if ($result_cm->num_rows >0){
                     $('#value_table').DataTable({
                         "searching": false,
                         "paging": true,
-                        "ordering": true,
+                        "ordering": false,
                         "info": false,
                         "responsive": true,
                         "lengthMenu": [5, 10, 15],
