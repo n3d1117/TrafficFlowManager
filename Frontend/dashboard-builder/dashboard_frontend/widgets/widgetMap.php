@@ -5942,7 +5942,9 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                     }
                                 }
                             }
-                            map.heatmapLayer.configure(map.cfg);
+                            if (map.heatmapLayer != null) {
+                                map.heatmapLayer.configure(map.cfg);
+                            }
                         }
                     }
 
@@ -6418,40 +6420,42 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                     //   $('#'+event.target).on('click', function(e) {
                     map.defaultMapRef.on('click', function(e) {
-                        //    if (map.testMetadata.metadata.file != 1) {
-                        var heatmapPointAndClickData = null;
-                        //  alert("Click on Map !");
-                        var pointAndClickCoord = e.latlng;
-                        var pointAndClickLat = pointAndClickCoord.lat.toFixed(5);
-                        var pointAndClickLng = pointAndClickCoord.lng.toFixed(5);
-                        //        var pointAndClickApiUrl = "https://heatmap.snap4city.org/interp.php?latitude=" + pointAndClickLat + "&longitude=" + pointAndClickLng + "&dataset=" + map.testMetadata.metadata.mapName + "&date=" + map.testMetadata.metadata.date;
-                        var pointAndClickApiUrl = heatmapUrl + "interp.php?latitude=" + pointAndClickLat + "&longitude=" + pointAndClickLng + "&dataset=" + map.testMetadata.metadata.mapName + "&date=" + map.testMetadata.metadata.date;
-                        $.ajax({
-                            url: pointAndClickApiUrl,
-                            async: true,
-                            success: function (heatmapPointAndClickData) {
-                                var popupData = {};
-                                popupData.mapName = heatmapPointAndClickData.mapName;
-                                popupData.latitude = pointAndClickLat;
-                                popupData.longitude = pointAndClickLng;
-                                popupData.metricName = heatmapPointAndClickData.metricName;
-                                popupData.dataTime = heatmapPointAndClickData.date;
-                                if (heatmapPointAndClickData.value) {
-                                    popupData.value = heatmapPointAndClickData.value.toFixed(5);
-                                    var customPointAndClickContent = prepareCustomMarkerForPointAndClick(popupData, "#C2D6D6", "#D1E0E0")
-                                    //   var pointAndClickPopup = L.popup(customPointAndClickMarker).openOn(map.defaultMapRef);
-                                    var popup = L.popup()
-                                        .setLatLng(pointAndClickCoord)
-                                        .setContent(customPointAndClickContent)
-                                        .openOn(map.defaultMapRef);
+                        if (map.testMetadata != null) {
+                            //    if (map.testMetadata.metadata.file != 1) {
+                            var heatmapPointAndClickData = null;
+                            //  alert("Click on Map !");
+                            var pointAndClickCoord = e.latlng;
+                            var pointAndClickLat = pointAndClickCoord.lat.toFixed(5);
+                            var pointAndClickLng = pointAndClickCoord.lng.toFixed(5);
+                            //        var pointAndClickApiUrl = "https://heatmap.snap4city.org/interp.php?latitude=" + pointAndClickLat + "&longitude=" + pointAndClickLng + "&dataset=" + map.testMetadata.metadata.mapName + "&date=" + map.testMetadata.metadata.date;
+                            var pointAndClickApiUrl = heatmapUrl + "interp.php?latitude=" + pointAndClickLat + "&longitude=" + pointAndClickLng + "&dataset=" + map.testMetadata.metadata.mapName + "&date=" + map.testMetadata.metadata.date;
+                            $.ajax({
+                                url: pointAndClickApiUrl,
+                                async: true,
+                                success: function (heatmapPointAndClickData) {
+                                    var popupData = {};
+                                    popupData.mapName = heatmapPointAndClickData.mapName;
+                                    popupData.latitude = pointAndClickLat;
+                                    popupData.longitude = pointAndClickLng;
+                                    popupData.metricName = heatmapPointAndClickData.metricName;
+                                    popupData.dataTime = heatmapPointAndClickData.date;
+                                    if (heatmapPointAndClickData.value) {
+                                        popupData.value = heatmapPointAndClickData.value.toFixed(5);
+                                        var customPointAndClickContent = prepareCustomMarkerForPointAndClick(popupData, "#C2D6D6", "#D1E0E0")
+                                        //   var pointAndClickPopup = L.popup(customPointAndClickMarker).openOn(map.defaultMapRef);
+                                        var popup = L.popup()
+                                            .setLatLng(pointAndClickCoord)
+                                            .setContent(customPointAndClickContent)
+                                            .openOn(map.defaultMapRef);
+                                    }
+                                },
+                                error: function (errorData) {
+                                    console.log("Ko Point&Click Heatmap API");
+                                    console.log(JSON.stringify(errorData));
                                 }
-                            },
-                            error: function (errorData) {
-                                console.log("Ko Point&Click Heatmap API");
-                                console.log(JSON.stringify(errorData));
-                            }
-                        });
-                        //    }
+                            });
+                            //    }
+                        }
                     });
 
                     function distance(lat1, lon1, lat2, lon2, unit) {   // unit: 'K' for Kilometers
@@ -6666,6 +6670,83 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             let latitude_max = map.defaultMapRef.getBounds()._northEast.lat;
                             let longitude_min = map.defaultMapRef.getBounds()._southWest.lng;
                             let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
+
+                            // INIZIO TRAFFICFLOWMANAGER
+                            if (baseQuery.includes(geoServerUrl)) {
+
+                                console.log("TrafficFlowManager INIT");
+
+                                // Get dataset name and metadata API url from passed data
+                                const datasetName = baseQuery.split("WMS&layers=")[1];
+                                const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
+
+                                console.log(apiUrl);
+                                heatmapData = null;
+                                $.ajax({
+                                    url: apiUrl,
+                                    async: false,
+                                    cache: false,
+                                    dataType: "text",
+                                    success: function (data) {
+                                        heatmapData = JSON.parse(data);
+                                    },
+                                    error: function (errorData) {
+                                        console.log("Ko Traffic Heatmap");
+                                        console.log(JSON.stringify(errorData));
+                                    }
+                                });
+
+                                map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
+                                map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
+
+                                const timestamp = heatmapData[0].dateTime;
+                                const timestampISO = timestamp + ".000Z";
+                                wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
+                                    layers: heatmapData[0].layerName,
+                                    format: 'image/png',
+                                    crs: L.CRS.EPSG4326,
+                                    transparent: true,
+                                    opacity: 0.5,
+                                    time: timestampISO,
+                                    pane: 'TrafficFlowManager:' + datasetName
+                                }).addTo(map.defaultMapRef);
+
+                                // Add Legend
+                                map.legendHeatmap.addTo(map.defaultMapRef);
+                                map.eventsOnMap.push(heatmap);
+                                const heatmapLegendColors = L.control({ position: 'bottomright' });
+                                heatmapLegendColors.onAdd = function() {
+                                    const div = L.DomUtil.create('div', 'info legend');
+                                    const legendImgPath = "../trafficRTDetails/legend.png";
+                                    div.innerHTML += " <img src=" + legendImgPath + " height='120'" + '<br>';
+                                    return div;
+                                };
+                                heatmapLegendColors.addTo(map.defaultMapRef);
+                                event.legendColors = heatmapLegendColors;
+                                map.eventsOnMap.push(event);
+
+                                // Done!
+                                loadingDiv.empty();
+                                loadingDiv.append(loadOkText);
+
+                                parHeight = loadOkText.height();
+                                parMarginTop = Math.floor((loadingDiv.height() - parHeight) / 2);
+                                loadOkText.css("margin-top", parMarginTop + "px");
+
+                                setTimeout(function () {
+                                    loadingDiv.css("opacity", 0);
+                                    setTimeout(function () {
+                                        loadingDiv.nextAll("#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv").each(function (i) {
+                                            $(this).css("top", ($('#<?= $_REQUEST['name_w'] ?>_div').height() - (($('#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv').length - 1) * loadingDiv.height())) + "px");
+                                        });
+                                        loadingDiv.remove();
+                                    }, 350);
+                                }, 1000);
+
+                                return;
+                            }
+                            // FINE TRAFFICFLOWMANAGER
+
                             let query = "";
                             if (baseQuery.includes("heatmap.php")) {    // OLD HEATMAP
                                 //  query = baseQuery + '&limit=30&latitude_min=' + latitude_min + '&latitude_max=' + latitude_max + '&longitude_min=' + longitude_min + '&longitude_max=' + longitude_max;
