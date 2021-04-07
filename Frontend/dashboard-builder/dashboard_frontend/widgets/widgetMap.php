@@ -6127,7 +6127,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             '<span id="<?= $_REQUEST['name_w'] ?>_rangemaxOpacity" style="display:inline-block;vertical-align:super;">' + current_opacity + '</span>' +
                             '</div>';
 
-                        // Heatmap Navigation Buottons (prev & next)
+                        // Heatmap Navigation Buttons (prev & next)
                         map.legendHeatmapDiv.innerHTML +=
                             '<div id="heatmapNavigationCnt">' +
                             //   '<a href="javascript:prevHeatmapPage()" id="btn_prev">Prev</a>'
@@ -6698,9 +6698,13 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                                 map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
                                 map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
-
+                                
                                 const timestamp = heatmapData[0].dateTime;
                                 const timestampISO = timestamp + ".000Z";
+
+                                mapName = heatmapData[0].fluxName;
+                                mapDate = timestamp.replace('T', ' ');
+                                
                                 wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
                                     layers: heatmapData[0].layerName,
                                     format: 'image/png',
