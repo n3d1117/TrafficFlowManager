@@ -6702,6 +6702,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 const timestamp = heatmapData[0].dateTime;
                                 const timestampISO = timestamp + ".000Z";
 
+                                current_opacity = 0.5
                                 mapName = heatmapData[0].fluxName;
                                 mapDate = timestamp.replace('T', ' ');
                                 
@@ -6710,7 +6711,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                     format: 'image/png',
                                     crs: L.CRS.EPSG4326,
                                     transparent: true,
-                                    opacity: 0.5,
+                                    opacity: current_opacity,
                                     time: timestampISO,
                                     pane: 'TrafficFlowManager:' + datasetName
                                 }).addTo(map.defaultMapRef);
