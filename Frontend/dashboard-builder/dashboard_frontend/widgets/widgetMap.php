@@ -2772,9 +2772,10 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
         }
 
         function addDefaultBaseMap(map) {
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-                maxZoom: 18
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
             }).addTo(map);
         }
 
@@ -6686,7 +6687,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 const datasetName = baseQuery.split("WMS&layers=")[1];
                                 const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
 
-                                console.log(apiUrl);
+                                // Get layers metadata from API
                                 heatmapData = null;
                                 $.ajax({
                                     url: apiUrl,
@@ -6704,21 +6705,20 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                                 map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
                                 map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
-                                
-                                const timestamp = heatmapData[0].dateTime;
-                                const timestampISO = timestamp + ".000Z";
 
+                                // Setup map
+                                const timestamp = heatmapData[0].dateTime;
                                 current_opacity = 0.5
                                 mapName = heatmapData[0].fluxName;
                                 mapDate = timestamp.replace('T', ' ');
-                                
+
+                                // Add layer to map
                                 wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
                                     layers: heatmapData[0].layerName,
                                     format: 'image/png',
                                     crs: L.CRS.EPSG4326,
                                     transparent: true,
                                     opacity: current_opacity,
-                                    time: timestampISO,
                                     pane: 'TrafficFlowManager:' + datasetName
                                 }).addTo(map.defaultMapRef);
 
@@ -6729,7 +6729,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 heatmapLegendColors.onAdd = function() {
                                     const div = L.DomUtil.create('div', 'info legend');
                                     const legendImgPath = "../trafficRTDetails/legend.png";
-                                    div.innerHTML += " <img src=" + legendImgPath + " height='120'" + '<br>';
+                                    div.innerHTML += " <img src=" + legendImgPath + " height='120'" + '<br style="margin-bottom:20px;">';
                                     return div;
                                 };
                                 heatmapLegendColors.addTo(map.defaultMapRef);
@@ -6739,11 +6739,9 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 // Done!
                                 loadingDiv.empty();
                                 loadingDiv.append(loadOkText);
-
                                 parHeight = loadOkText.height();
                                 parMarginTop = Math.floor((loadingDiv.height() - parHeight) / 2);
                                 loadOkText.css("margin-top", parMarginTop + "px");
-
                                 setTimeout(function () {
                                     loadingDiv.css("opacity", 0);
                                     setTimeout(function () {
@@ -7064,87 +7062,120 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         if (event.passedData.includes(geoServerUrl)) {
 
                             console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page);
-                            
+                            const datasetName = event.passedData.split("WMS&layers=")[1];
+                            map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
+                            map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
+                            const timestamp = heatmapData[current_page].dateTime;
+
                             if (!animationFlag) {
 
-                                // Get dataset name and metadata API url from passed data
-                                const datasetName = event.passedData.split("WMS&layers=")[1];
-                                const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
-
-                                console.log(apiUrl);
-                                heatmapData = null;
-                                $.ajax({
-                                    url: apiUrl,
-                                    async: false,
-                                    cache: false,
-                                    dataType: "text",
-                                    success: function (data) {
-                                        heatmapData = JSON.parse(data);
-                                    },
-                                    error: function (errorData) {
-                                        console.log("Ko Traffic Heatmap");
-                                        console.log(JSON.stringify(errorData));
-                                    }
-                                });
-
-                                map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
-                                map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
-
-                                const timestamp = heatmapData[current_page].dateTime;
-                                const timestampISO = timestamp + ".000Z";
-
-                                mapName = heatmapData[current_page].fluxName;
+                                // Update map date
                                 mapDate = timestamp.replace('T', ' ');
 
+                                // Add correct layer to the map
                                 wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
                                     layers: heatmapData[current_page].layerName,
                                     format: 'image/png',
                                     crs: L.CRS.EPSG4326,
                                     transparent: true,
                                     opacity: current_opacity,
-                                    time: timestampISO,
                                     pane: 'TrafficFlowManager:' + datasetName
                                 }).addTo(map.defaultMapRef);
 
-                                // Add Legend
+                                // Add legend and heatmap
                                 map.legendHeatmap.addTo(map.defaultMapRef);
                                 map.eventsOnMap.push(heatmap);
-                                const heatmapLegendColors = L.control({ position: 'bottomright' });
-                                heatmapLegendColors.onAdd = function() {
-                                    const div = L.DomUtil.create('div', 'info legend');
-                                    const legendImgPath = "../trafficRTDetails/legend.png";
-                                    div.innerHTML += " <img src=" + legendImgPath + " height='120'" + '<br>';
-                                    return div;
-                                };
-                                heatmapLegendColors.addTo(map.defaultMapRef);
-                                event.legendColors = heatmapLegendColors;
-                                map.eventsOnMap.push(event);
 
-                                // Done!
-                                loadingDiv.empty();
-                                loadingDiv.append(loadOkText);
-
-                                parHeight = loadOkText.height();
-                                parMarginTop = Math.floor((loadingDiv.height() - parHeight) / 2);
-                                loadOkText.css("margin-top", parMarginTop + "px");
-
-                                setTimeout(function () {
-                                    loadingDiv.css("opacity", 0);
-                                    setTimeout(function () {
-                                        loadingDiv.nextAll("#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv").each(function (i) {
-                                            $(this).css("top", ($('#<?= $_REQUEST['name_w'] ?>_div').height() - (($('#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv').length - 1) * loadingDiv.height())) + "px");
-                                        });
-                                        loadingDiv.remove();
-                                    }, 350);
-                                }, 1000);
                             } else {
 
-                                // Get dataset name and metadata API url from passed data
-                                const datasetName = event.passedData.split("WMS&layers=")[1];
-                                const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
+                                var animationCurrentDayTimestamp;
+                                const animationCurrentDayFwdTimestamp = [];
+                                const animationCurrentDayBckwdTimestamp = [];
+                                let animationStringTimestamp;
+                                const day = timestamp.substring(0, 10);
 
-                                // TODO: get all layers name in last 24h, the add animated wms gif
+                                // Get all layer names for animation
+                                if (current_page == 0) {
+                                    var offsetFwd = current_page;
+                                    while (heatmapData[offsetFwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayFwdTimestamp.push(heatmapData[offsetFwd].layerName);
+                                        offsetFwd++;
+                                        if (offsetFwd > numHeatmapPages() -1) {
+                                            break;
+                                        }
+                                    }
+                                } else if (current_page == numHeatmapPages() - 1) {
+                                    var offsetBckwd = current_page - 1;
+                                    while (heatmapData[offsetBckwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayBckwdTimestamp.push(heatmapData[offsetBckwd].layerName);
+                                        offsetBckwd--;
+                                        if (offsetBckwd < 0) {
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    var offsetFwd = current_page;
+                                    while (heatmapData[offsetFwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayFwdTimestamp.push(heatmapData[offsetFwd].layerName);
+                                        offsetFwd++;
+                                        if (offsetFwd > numHeatmapPages() -1) {
+                                            break;
+                                        }
+                                    }
+                                    var offsetBckwd = current_page - 1;
+                                    while (heatmapData[offsetBckwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayBckwdTimestamp.push(heatmapData[offsetBckwd].layerName);
+                                        offsetBckwd--;
+                                        if (offsetBckwd < 0) {
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // Concatenate layer names
+                                animationCurrentDayTimestamp = animationCurrentDayFwdTimestamp.reverse().concat(animationCurrentDayBckwdTimestamp);
+                                animationStringTimestamp = animationCurrentDayTimestamp.join(",");
+
+                                // Create animated layer using WMS animator
+                                const bbox = [longitude_min, latitude_min, longitude_max, latitude_max].join(",");
+                                const imageUrl = geoServerUrl + 'geoserver/wms/animate?layers=' + heatmapData[current_page].layerName + '&aparam=layers&avalues=' + animationStringTimestamp + '&format=image/gif;subtype=animated&format_options=gif_loop_continuosly:true;layout:message;gif_frames_delay:500&transparent=true&bbox=' + bbox;
+                                const imageBounds = [[latitude_min, longitude_min], [latitude_max, longitude_max]];
+                                const animatedLayer = L.imageOverlay(imageUrl, imageBounds, {opacity: current_opacity, pane: 'TrafficFlowManager:' + datasetName}).addTo(map.defaultMapRef);
+
+                                // Add legend (w/ correct options) and animated layer to the maps
+                                map.legendHeatmap.addTo(map.defaultMapRef);
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_animation").checked = true;
+                                $("<?= $_REQUEST['name_w'] ?>_slidermaxOpacity").slider('disable');
+                                map.eventsOnMap.push(animatedLayer);
                             }
+
+                            // Setup Legend
+                            const heatmapLegendColors = L.control({ position: 'bottomright' });
+                            heatmapLegendColors.onAdd = function() {
+                                const div = L.DomUtil.create('div', 'info legend');
+                                const legendImgPath = "../trafficRTDetails/legend.png";
+                                div.innerHTML += " <img src=" + legendImgPath + " height='120'" + '<br style="margin-bottom:20px;">';
+                                return div;
+                            };
+                            heatmapLegendColors.addTo(map.defaultMapRef);
+                            event.legendColors = heatmapLegendColors;
+                            map.eventsOnMap.push(event);
+
+                            // Done!
+                            loadingDiv.empty();
+                            loadingDiv.append(loadOkText);
+                            parHeight = loadOkText.height();
+                            parMarginTop = Math.floor((loadingDiv.height() - parHeight) / 2);
+                            loadOkText.css("margin-top", parMarginTop + "px");
+                            setTimeout(function () {
+                                loadingDiv.css("opacity", 0);
+                                setTimeout(function () {
+                                    loadingDiv.nextAll("#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv").each(function (i) {
+                                        $(this).css("top", ($('#<?= $_REQUEST['name_w'] ?>_div').height() - (($('#<?= $_REQUEST['name_w'] ?>_content div.gisMapLoadingDiv').length - 1) * loadingDiv.height())) + "px");
+                                    });
+                                    loadingDiv.remove();
+                                }, 350);
+                            }, 1000);
 
                             return;
                         }
