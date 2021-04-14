@@ -2,12 +2,21 @@
 
 <?php
 
+include('config.php'); // Includes Login Script
 include('external_service.php');
 
-// METADATA API
-$url_api = $host_trafficflowmanager . 'trafficflowmanager/api/metadata';
-$json_api = file_get_contents($url_api);
-$list_api = json_decode($json_api);
+if (isset($_SESSION['accessToken'])){
+    // METADATA API
+    $url_api = $host_trafficflowmanager . 'trafficflowmanager/api/metadata';
+    $json_api = file_get_contents($url_api);
+    $list_api = json_decode($json_api);
+}
+
+if (isset ($_SESSION['username'])){
+    $role_att = $_SESSION['role'];
+} else {
+    $role_att = "";
+}
 
 ?>
 
@@ -318,9 +327,21 @@ $list_api = json_decode($json_api);
     <!-- JavaScript -->
     <script type='text/javascript'>
 
-        const host_trafficflowmanager = "<?php echo $host_trafficflowmanager; ?>";
+        const host_trafficflowmanager = "<?=$host_trafficflowmanager;?>";
+        const role = "<?=$role_att;?>";
 
         $(document).ready(function() {
+
+            // Authentication
+            if (role == "") {
+                $(document).empty();
+                //window.alert("You need to log in to access to this page!");
+                if (window.self !== window.top) {
+                    window.location.href = 'https://www.snap4city.org/auth/realms/master/protocol/openid-connect/auth?response_type=code&redirect_uri=https%3A%2F%2Fmain.snap4city.org%2Fmanagement%2FssoLogin.php%3Fredirect%3DiframeApp.php%253FlinkUrl%253Dhttps%253A%252F%252Fwww.snap4city.org%252Fdrupal%252Fopenid-connect%252Flogin%2526linkId%253Dsnap4cityPortalLink%2526pageTitle%253Dwww.snap4city.org%2526fromSubmenu%253Dfalse&client_id=php-dashboard-builder&nonce=be3aea0a2bb852217929cbb639370c9e&state=d090eb830f9abb504fd7012f6a12389c&scope=openid+username+profile';
+                } else {
+                    window.location.href = 'page.php?pageTitle=Process%20Loader:%20View%20Resources';
+                }
+            }
 
             $('#trafficflow_table').DataTable({
                 "searching": true,
