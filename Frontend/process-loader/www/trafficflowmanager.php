@@ -5,11 +5,29 @@
 include('config.php'); // Includes Login Script
 include('external_service.php');
 
-if (isset($_SESSION['accessToken'])){
+if (isset($_SESSION['accessToken'])) {
+
     // METADATA API
     $url_api = $host_trafficflowmanager . 'trafficflowmanager/api/metadata';
     $json_api = file_get_contents($url_api);
     $list_api = json_decode($json_api);
+
+    // QUERY COLOR MAPS
+    $link = mysqli_connect($host_heatmap, $username_heatmap, $password_heatmap) or die("failed to connect to server !!");
+    mysqli_set_charset($link, 'utf8');
+    mysqli_select_db($link, $dbname_heatmap);
+    $process_cm = array();
+    $query_cm = "SELECT DISTINCT metric_name FROM heatmap.colors";
+    $result_cm = mysqli_query($link, $query_cm) or die(mysqli_error($link));
+    if ($result_cm->num_rows >0){
+        while ($row_cm = mysqli_fetch_assoc($result_cm)) {
+            $listFile_cm = array(
+                "metric_name" => $row_cm['metric_name']
+            );
+            array_push($process_cm, $listFile_cm);
+        }
+        $total_cm=$result_cm->num_rows;
+    }
 }
 
 if (isset ($_SESSION['username'])){
