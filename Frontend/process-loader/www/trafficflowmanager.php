@@ -5,7 +5,7 @@
 include('external_service.php');
 
 // METADATA API
-$url_api= $host_trafficflowmanager . 'trafficflowmanager/api/metadata';
+$url_api = $host_trafficflowmanager . 'trafficflowmanager/api/metadata';
 $json_api = file_get_contents($url_api);
 $list_api = json_decode($json_api);
 

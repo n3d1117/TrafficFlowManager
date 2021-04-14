@@ -67,10 +67,6 @@ public class UploadLayerServlet extends HttpServlet {
                     break;
                 case reconstruction:
                     String uploadedLayerName = handleReconstruction(body);
-
-                    // http://localhost:8080/geoserver/wms/reflect?layers=traffic:{uploadedLayerName}
-                    // &bbox=11.20838,43.728234863281,11.3085822045839,43.8293133780343
-
                     resp.getWriter().print(buildResponse(true, "layerName", uploadedLayerName));
                     break;
             }
