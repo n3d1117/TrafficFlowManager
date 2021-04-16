@@ -6678,12 +6678,12 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
 
                             // INIZIO TRAFFICFLOWMANAGER
-                            if (baseQuery.includes(geoServerUrl)) {
+                            if (baseQuery.includes(geoServerUrl) && baseQuery.includes("trafficflowmanager=true")) {
 
                                 console.log("TrafficFlowManager INIT");
 
                                 // Get dataset name and metadata API url from passed data
-                                const datasetName = baseQuery.split("WMS&layers=")[1];
+                                const datasetName = baseQuery.split("WMS&layers=")[1].split("&")[0];
                                 const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
 
                                 // Get layers metadata from API
@@ -7058,10 +7058,10 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
 
                         // INIZIO TRAFFICFLOWMANAGER
-                        if (event.passedData.includes(geoServerUrl)) {
+                        if (event.passedData.includes(geoServerUrl)  && baseQuery.includes("trafficflowmanager=true")) {
 
                             console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page);
-                            const datasetName = event.passedData.split("WMS&layers=")[1];
+                            const datasetName = event.passedData.split("WMS&layers=")[1].split("&")[0];
                             map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
                             map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
                             const timestamp = heatmapData[current_page].dateTime;
