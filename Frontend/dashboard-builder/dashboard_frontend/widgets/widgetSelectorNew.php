@@ -1060,10 +1060,23 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                                 var thisQuery = $(this).attr("data-query");
                                 var sourceSelector = event.currentTarget.offsetParent;
+
+                                const isAddingTrafficFlowManagerHeatmap = ($(this).attr("data-query").includes("&trafficflowmanager=true"))
+
                                 $('.gisPinLink').each(function( index ) {
                                     if(($(this).attr("data-query").includes("heatmap.php") || $(this).attr("data-query").includes("wmsserver.snap4city.org") || $(this).attr("data-query").includes(geoServerUrl)) && $(this).attr("data-query") != thisQuery) {
                                         if (sourceSelector == $(this).offsetParent()[0]) {
                                             if ($(this).attr("data-onMap") === "true") {
+
+                                                // logica additività trafficflowmanager
+                                                // non rimuovere pin dal selettore se:
+                                                // cliccato su heatmap e sto rimuovendo pin traffico
+                                                // cliccato su traffico e sto rimuovendo pin heatmap
+                                                const isRemovingTrafficFlowManagerPin = $(this).attr("data-query").includes("&trafficflowmanager=true");
+                                                if ((!isAddingTrafficFlowManagerHeatmap && isRemovingTrafficFlowManagerPin) || (isAddingTrafficFlowManagerHeatmap && !isRemovingTrafficFlowManagerPin)) {
+                                                    return;
+                                                }
+
                                                 $(this).attr("data-onMap", "false");
                                                 if ($(this).attr("data-symbolMode") === 'auto') {
                                                     if ($(this).attr("data-iconTextMode") == "icon" && $(this).parents("div.gisMapPtrContainer").find("div.poolIcon").children(0).attr("src") != null) {
