@@ -206,6 +206,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
         var current_radius = null;
         var current_opacity = null;
+        var current_traffic_opacity = null;
         var changeRadiusOnZoom = false;
         var estimatedRadius = null;
         var estimateRadiusFlag = false;
@@ -215,11 +216,15 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
         var heatmapLegendColorsFullscreen = null;
         var legendHeatmapFullscreen = null;
         var mapName = null;
+        var trafficMapName = null;
         var mapDate = null;
+        var trafficMapDate = null;
         var resetPageFlag = null;
         var wmsDatasetName = null;
         var passedParams = null;
         var animationFlag = false;
+        var animationFlagTraffic = false;
+        var trafficData = null;
 
         var dataForApi = "";
 
@@ -239,8 +244,10 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
             wmsLayerFullscreen = null;*/
 
         var current_page = 0;
+        var current_page_traffic = 0;
         var records_per_page = 1;
         var wmsLayer = null;
+        var trafficWmsLayer = null;
         var wmsLayerFullscreen = null;
         var iconsFileBuffer = [];
         var bubbleSelectedMetric = [];
@@ -2772,8 +2779,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
         }
 
         function addDefaultBaseMap(map) {
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', {
                 maxZoom: 18
             }).addTo(map);
         }
@@ -5857,6 +5863,10 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         map.legendHeatmap = L.control({position: 'topright'});
                     }
 
+                    if(!map.trafficLegendHeatmap) {
+                        map.trafficLegendHeatmap = L.control({position: 'topright'});
+                    }
+
                     function changeHeatmapPage(page)
                     {
                         var btn_next = document.getElementById("<?= $_REQUEST['name_w'] ?>_nextButt");
@@ -5895,10 +5905,42 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         }
                     }
 
+                    function changeTrafficHeatmapPage(page) {
+                        var btn_next = document.getElementById("<?= $_REQUEST['name_w'] ?>_nextButt_traffic");
+                        var btn_prev = document.getElementById("<?= $_REQUEST['name_w'] ?>_prevButt_traffic");
+                        var heatmapDescr = document.getElementById("<?= $_REQUEST['name_w'] ?>_heatMapDescr_traffic");
+
+                        // Validate page
+                        if (numTrafficHeatmapPages() > 1) {
+                            if (page < 1) page = 1;
+                            if (page > numTrafficHeatmapPages()) page = numTrafficHeatmapPages();
+
+                            if (current_page_traffic == 0) {
+                                btn_next.style.visibility = "hidden";
+                            } else {
+                                btn_next.style.visibility = "visible";
+                            }
+
+                            if (current_page_traffic == numTrafficHeatmapPages() - 1) {
+                                btn_prev.style.visibility = "hidden";
+                            } else {
+                                btn_prev.style.visibility = "visible";
+                            }
+                        }
+
+                        if (current_page_traffic < numTrafficHeatmapPages()) {
+                            heatmapDescr.firstChild.wholeText = trafficData[current_page_traffic].dateTime;
+                        }
+                    }
+
                     function numHeatmapPages()
                     {
                         //    return Math.ceil(heatmapData.length / records_per_page);
                         return heatmapData.length;
+                    }
+                    
+                    function numTrafficHeatmapPages() {
+                        return trafficData.length;
                     }
 
 
@@ -5946,6 +5988,13 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                         $("#<?= $_REQUEST['name_w'] ?>_range" + option).text(parseFloat(current_opacity).toFixed(parseInt(decimals)));
                                         $("#<?= $_REQUEST['name_w'] ?>_slider" + option).attr("value", parseFloat(current_opacity).toFixed(parseInt(decimals)));
                                     }
+                                }
+                            } else if (option == "maxTrafficOpacity") {
+                                if (trafficWmsLayer) {
+                                    trafficWmsLayer.setOpacity(value);
+                                    current_traffic_opacity = value;
+                                    $("#<?= $_REQUEST['name_w'] ?>_range" + option).text(parseFloat(current_traffic_opacity).toFixed(parseInt(decimals)));
+                                    $("#<?= $_REQUEST['name_w'] ?>_slider" + option).attr("value", parseFloat(current_traffic_opacity).toFixed(parseInt(decimals)));
                                 }
                             }
                             if (map.heatmapLayer != null) {
@@ -6202,6 +6251,159 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         return map.legendHeatmapDiv;
                     };
 
+                    // INIZIO TRAFFICFLOWMANAGER GESTIONE LEGENDA + SLIDER OPACITA', PAGINE E ANIMAZIONE
+                    map.trafficLegendHeatmap.onAdd = function () {
+                        map.trafficLegendHeatmapDiv = L.DomUtil.create('div');
+                        map.trafficLegendHeatmapDiv.id = "trafficHeatmapLegend";
+                        if (L.Browser.touch) {
+                            L.DomEvent.disableClickPropagation(map.trafficLegendHeatmapDiv);
+                            L.DomEvent.on(map.trafficLegendHeatmapDiv, 'mousewheel', L.DomEvent.stopPropagation);
+                        } else {
+                            L.DomEvent.on(map.trafficLegendHeatmapDiv, 'click', L.DomEvent.stopPropagation);
+                        }
+                        map.trafficLegendHeatmapDiv.style.width = "340px";
+                        map.trafficLegendHeatmapDiv.style.fontWeight = "bold";
+                        map.trafficLegendHeatmapDiv.style.background = "#cccccc";
+                        map.trafficLegendHeatmapDiv.style.padding = "10px";
+
+                        let colors = [];
+                        colors['blue'] = '#0000FF';
+                        colors['cyan'] = '#00FFFF';
+                        colors['green'] = '#008000';
+                        colors['yellowgreen'] = '#9ACD32';
+                        colors['yellow'] = '#FFFF00';
+                        colors['gold'] = '#FFD700';
+                        colors['orange'] = '#FFA500';
+                        colors['darkorange'] = '#FF8C00';
+                        colors['orangered'] = '#FF4500';
+                        colors['tomato'] = '#FF6347';
+                        colors['red'] = '#FF0000';
+                        let colors_value = [];
+                        colors_value['blue'] = '#0000FF';
+                        colors_value['cyan'] = '#00FFFF';
+                        colors_value['green'] = '#008000';
+                        colors_value['yellowgreen'] = '#9ACD32';
+                        colors_value['yellow'] = '#FFFF00';
+                        colors_value['gold'] = '#FFD700';
+                        colors_value['orange'] = '#FFA500';
+                        colors_value['darkorange'] = '#FF8C00';
+                        colors_value['tomato'] = '#FF6347';
+                        colors_value['orangered'] = '#FF4500';
+                        colors_value['red'] = '#FF0000';
+                        map.trafficLegendHeatmapDiv.innerHTML += '<div class="textTitle" style="text-align:center">' + trafficMapName + '</div>';
+                        map.trafficLegendHeatmapDiv.innerHTML += '<div id="<?= $_REQUEST['name_w'] ?>_controlsContainer" style="height:20px"><div class="text"  style="width:50%; float:left">' + '<?php echo ucfirst(isset($_REQUEST["profile"]) ? $_REQUEST["profile"] : "Traffic Heatmap Controls:"); ?></div><div class="text" style="width:50%; float:right"><label class="switch"><input type="checkbox" id="<?= $_REQUEST['name_w'] ?>_animation_traffic"><div class="slider round"><span class="animationOn"></span><span class="animationOff" style="color: black; text-align: right">24H</span><span class="animationOn" style="color: black; text-align: right">Static</span></div></label></div></div>';
+
+                        // max opacity
+                        map.trafficLegendHeatmapDiv.innerHTML +=
+                            '<div id="trafficHeatmapOpacityControl">' +
+                            '<div style="display:inline-block; vertical-align:super;">Max Opacity: &nbsp;&nbsp;&nbsp;&nbsp;</div>' +
+                            '<div id="<?= $_REQUEST['name_w'] ?>_downSlider_opacity_traffic" style="display:inline-block; vertical-align:super; color: #0078A8">&#10094;</div>&nbsp;&nbsp;&nbsp;' +
+                            '<input id="<?= $_REQUEST['name_w'] ?>_slidermaxTrafficOpacity" style="display:inline-block; vertical-align:baseline; width:auto" type="range" min="0" max="1" value="' + current_traffic_opacity + '" step="0.01">' +
+                            '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<div id="upSlider_opacity_traffic" style="display:inline-block;vertical-align:super; color: #0078A8">&#10095;</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' +
+                            '<span id="<?= $_REQUEST['name_w'] ?>_rangemaxTrafficOpacity" style="display:inline-block;vertical-align:super;">' + current_traffic_opacity + '</span>' +
+                            '</div>';
+
+                        // Traffic Heatmap Navigation Buttons (prev & next)
+                        map.trafficLegendHeatmapDiv.innerHTML +=
+                            '<div id="heatmapNavigationCnt_traffic">' +
+                            '<input type="button" id="<?= $_REQUEST['name_w'] ?>_prevButt_traffic" value="< Prev" style="float: left"/>' +
+                            '<input type="button" id="<?= $_REQUEST['name_w'] ?>_nextButt_traffic" value="Next >" style="float: right"/>' +
+                            '<div id="<?= $_REQUEST['name_w'] ?>_heatMapDescr_traffic" style="text-align: center">' + trafficMapDate + '</p>' +
+                            '</div>';
+
+                        function checkLegend() {
+                            document.getElementById("<?= $_REQUEST['name_w'] ?>_slidermaxTrafficOpacity").addEventListener("input", function(){ setOption('maxTrafficOpacity', this.value, 2)}, false);
+                            document.getElementById("<?= $_REQUEST['name_w'] ?>_animation_traffic").addEventListener("click", function () { animateTrafficHeatmap()}, false);
+                            document.getElementById("<?= $_REQUEST['name_w'] ?>_prevButt_traffic").addEventListener("click", function(){ prevTrafficHeatmapPage()}, false);
+                            document.getElementById("<?= $_REQUEST['name_w'] ?>_nextButt_traffic").addEventListener("click", function(){ nextTrafficHeatmapPage()}, false);
+
+                            if (current_page_traffic == 0) {
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_nextButt_traffic").style.visibility = "hidden";
+                            } else {
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_nextButt_traffic").style.visibility = "visible";
+                            }
+
+                            if (current_page_traffic == numTrafficHeatmapPages() - 1) {
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_prevButt_traffic").style.visibility = "hidden";
+                            } else {
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_prevButt_traffic").style.visibility = "visible";
+                            }
+                        }
+                        setTimeout(checkLegend, 500);
+                        return map.trafficLegendHeatmapDiv;
+                    };
+
+                    function removeTrafficHeatmap(index, isAnimated) {
+                        if (isAnimated) {
+                            map.defaultMapRef.removeLayer(map.eventsOnMap[index]);
+                        } else {
+                            map.defaultMapRef.removeLayer(trafficWmsLayer);
+                        }
+                        map.defaultMapRef.removeControl(map.trafficLegendHeatmap);
+                        map.defaultMapRef.removeControl(map.eventsOnMap[index + 1].legendColors);
+                        map.eventsOnMap.splice(index, 2);
+                    }
+
+                    function nextTrafficHeatmapPage() {
+                        if (animationFlagTraffic) {
+                            return;
+                        }
+                        animationFlagTraffic = false;
+                        if (current_page_traffic > 0) {
+                            current_page_traffic--;
+                            changeTrafficHeatmapPage(current_page_traffic);
+                            for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+                                if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                    event = map.eventsOnMap[i + 1]; // aggiorna evento corretto in caso di più heatmap presenti sulla mappa
+                                    removeTrafficHeatmap(i, false)
+                                    break;
+                                }
+                            }
+                            addHeatmapFromClient(false);
+                        }
+                    }
+
+                    function prevTrafficHeatmapPage() {
+                        if (animationFlagTraffic) {
+                            return;
+                        }
+                        animationFlagTraffic = false;
+                        if (current_page_traffic < numTrafficHeatmapPages() - 1) {
+                            current_page_traffic++;
+                            changeTrafficHeatmapPage(current_page_traffic);
+                            for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+                                if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                    event = map.eventsOnMap[i + 1] // aggiorna evento corretto in caso di più heatmap presenti sulla mappa
+                                    removeTrafficHeatmap(i, false)
+                                    break;
+                                }
+                            }
+                            addHeatmapFromClient(false);
+                        }
+                    }
+
+                    function animateTrafficHeatmap() {
+                        for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+                            if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                event = map.eventsOnMap[i + 1] // aggiorna evento corretto in caso di più heatmap presenti sulla mappa
+                                removeTrafficHeatmap(i, false)
+                                break;
+                            } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                event = map.eventsOnMap[i + 1] // aggiorna evento corretto in caso di più heatmap presenti sulla mappa
+                                removeTrafficHeatmap(i, true)
+                                break;
+                            }
+                        }
+                        if (!animationFlagTraffic) {
+                            animationFlagTraffic = true;
+                            addHeatmapFromClient(animationFlagTraffic);
+                        } else {
+                            animationFlagTraffic = false;
+                            addHeatmapFromClient(animationFlagTraffic);
+                        }
+                    }
+                    // FINE TRAFFICFLOWMANAGER GESTIONE LEGENDA + SLIDER OPACITA', PAGINE E ANIMAZIONE
+
                     function nextHeatmapPage()
                     {
                         animationFlag = false;
@@ -6210,10 +6412,23 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             changeHeatmapPage(current_page);
 
                             for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+
+                                // logica per evitare di rimuovere layer di trafficflowmanager
+                                if (i > 0 && map.eventsOnMap[i - 1].eventType === 'traffic_heatmap') {
+                                    continue
+                                } else if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                    continue
+                                } else if (i > 0 && map.eventsOnMap[i-1]._url && map.eventsOnMap[i-1]._url.includes("animate") && map.eventsOnMap[i-1].options.pane.includes("TrafficFlowManager")) {
+                                    continue
+                                } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                    continue
+                                }
+
                                 if (map.eventsOnMap[i].eventType === 'heatmap') {
                                     removeHeatmap(false);
                                     map.eventsOnMap.splice(i, 1);
                                 } else if (map.eventsOnMap[i].type === 'addHeatmap') {
+                                    event = map.eventsOnMap[i] // aggiorna evento corretto in caso di più heatmap
                                     removeHeatmapColorLegend(i, false);
                                     map.eventsOnMap.splice(i, 1);
                                 } else if (map.eventsOnMap[i] !== null && map.eventsOnMap[i] !== undefined) {
@@ -6278,10 +6493,23 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                     function animateHeatmap()
                     {
                         for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+
+                            // logica per evitare di rimuovere layer di trafficflowmanager
+                            if (i > 0 && map.eventsOnMap[i - 1].eventType === 'traffic_heatmap') {
+                                continue
+                            } else if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                continue
+                            } else if (i > 0 && map.eventsOnMap[i-1]._url && map.eventsOnMap[i-1]._url.includes("animate") && map.eventsOnMap[i-1].options.pane.includes("TrafficFlowManager")) {
+                                continue
+                            } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                continue
+                            }
+
                             if (map.eventsOnMap[i].eventType === 'heatmap') {
                                 removeHeatmap(false);
                                 map.eventsOnMap.splice(i, 1);
                             } else if (map.eventsOnMap[i].type === 'addHeatmap') {
+                                event = map.eventsOnMap[i]; // aggiorna evento corretto in caso di più heatmap
                                 removeHeatmapColorLegend(i, false);
                                 map.eventsOnMap.splice(i, 1);
                             } else if (map.eventsOnMap[i] !== null && map.eventsOnMap[i] !== undefined) {
@@ -6319,10 +6547,23 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             changeHeatmapPage(current_page);
 
                             for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
+
+                                // logica per evitare di rimuovere layer di trafficflowmanager
+                                if (i > 0 && map.eventsOnMap[i - 1].eventType === 'traffic_heatmap') {
+                                    continue
+                                } else if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                    continue
+                                } else if (i > 0 && map.eventsOnMap[i-1]._url && map.eventsOnMap[i-1]._url.includes("animate") && map.eventsOnMap[i-1].options.pane.includes("TrafficFlowManager")) {
+                                    continue
+                                } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                    continue
+                                }
+
                                 if (map.eventsOnMap[i].eventType === 'heatmap') {
                                     removeHeatmap(false);
                                     map.eventsOnMap.splice(i, 1);
                                 } else if (map.eventsOnMap[i].type === 'addHeatmap') {
+                                    event = map.eventsOnMap[i]; // aggiorna evento corretto in caso di più heatmap
                                     removeHeatmapColorLegend(i, false);
                                     map.eventsOnMap.splice(i, 1);
                                 } else if (map.eventsOnMap[i] !== null && map.eventsOnMap[i] !== undefined) {
@@ -6607,11 +6848,85 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                     function addHeatmapToMap() {
                         animationFlag = false;
+                        animationFlagTraffic = false;
                         //    current_page = 0;
                         try {
+
+
+
+
+
+
+
+
+                            // TODO REMOVE THIS!!! ONLY FOR TESTING
+                            baseQuery = event.passedData;
+                            if (baseQuery.includes("trafficflowmanager=true"))
+                                geoServerUrl = 'http://geoserver:8080/'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            const isAddingTrafficHeatmap = (event.passedData.includes(geoServerUrl) && event.passedData.includes("trafficflowmanager=true"));
+                            
                             if (map.eventsOnMap.length > 0) {
+
+                                const normalHeatmapPresent = map.eventsOnMap.some(event => (event.eventType === 'heatmap' || (event._url && event._url.includes("animate") && !event.options.pane.includes("TrafficFlowManager"))))
+
                                 for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
-                                    if (map.eventsOnMap[i].eventType === 'heatmap') {
+
+                                    // logica additività trafficflowmanager
+                                    // non rimuovere layer dalla mappa se:
+                                    // 1. sto aggiungendo una heatmap normale e sulla mappa è presente una traffic heatmap, oppure
+                                    // 2. sto aggiungendo una traffic heatmap e sulla mappa è presente una heatmap normale
+                                    if (!isAddingTrafficHeatmap && !normalHeatmapPresent) {
+                                        // in questo caso non devo rimuovere nulla
+                                        break;
+                                    } else if (isAddingTrafficHeatmap && normalHeatmapPresent) {
+                                        // in questo caso devo solo rimuovere la traffic heatmap corrente
+                                        if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                            removeTrafficHeatmap(i, false)
+                                            current_page_traffic = 0;
+                                            break;
+                                        } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                            removeTrafficHeatmap(i, true)
+                                            current_page_traffic = 0;
+                                            break;
+                                        }
+                                        continue;
+                                    }
+
+                                    if (isAddingTrafficHeatmap) {
+                                        // se sto aggiungendo una traffic heatmap e già ce n'è una sulla mappa, rimuovo la traffic heatmap corrente
+                                        if (i > 0 && map.eventsOnMap[i - 1].eventType === 'traffic_heatmap') {
+                                            removeTrafficHeatmap(i, false)
+                                            current_page_traffic = 0;
+                                            break;
+                                        } else if (i > 0 && map.eventsOnMap[i - 1]._url && map.eventsOnMap[i - 1]._url.includes("animate") && map.eventsOnMap[i - 1].options.pane.includes("TrafficFlowManager")) {
+                                            removeTrafficHeatmap(i, true)
+                                            current_page_traffic = 0;
+                                            break;
+                                        }
+                                    } else if (i > 0 && map.eventsOnMap[i-1].eventType === 'traffic_heatmap') {
+                                        // logica per evitare di rimuovere layer di trafficflowmanager
+                                    } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                                        // logica per evitare di rimuovere layer di trafficflowmanager
+                                    } else if (i>0 && map.eventsOnMap[i-1]._url && map.eventsOnMap[i-1]._url.includes("animate") && map.eventsOnMap[i-1].options.pane.includes("TrafficFlowManager")) {
+                                        // logica per evitare di rimuovere layer di trafficflowmanager
+
+                                    } else if (map.eventsOnMap[i].eventType === 'heatmap') {
                                         removeHeatmap(true);
                                         map.eventsOnMap.splice(i, 1);
                                     } else if (map.eventsOnMap[i].type === 'addHeatmap') {
@@ -6671,15 +6986,22 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                             let heatmap = {};
                             heatmap.eventType = "heatmap";
-                            baseQuery = event.passedData;
+                            //baseQuery = event.passedData; // TODO UNCOMMENT
                             let latitude_min = map.defaultMapRef.getBounds()._southWest.lat;
                             let latitude_max = map.defaultMapRef.getBounds()._northEast.lat;
                             let longitude_min = map.defaultMapRef.getBounds()._southWest.lng;
                             let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
 
+
+
+                            
+
+                            
+                            
+
                             // INIZIO TRAFFICFLOWMANAGER
                             if (baseQuery.includes(geoServerUrl) && baseQuery.includes("trafficflowmanager=true")) {
-
+                                heatmap.eventType = "traffic_heatmap";
                                 console.log("TrafficFlowManager INIT");
 
                                 // Get dataset name and metadata API url from passed data
@@ -6687,14 +7009,13 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 const apiUrl = geoServerUrl + "trafficflowmanager/api/metadata?fluxName=" + datasetName;
 
                                 // Get layers metadata from API
-                                heatmapData = null;
                                 $.ajax({
                                     url: apiUrl,
                                     async: false,
                                     cache: false,
                                     dataType: "text",
                                     success: function (data) {
-                                        heatmapData = JSON.parse(data);
+                                        trafficData = JSON.parse(data);
                                     },
                                     error: function (errorData) {
                                         console.log("Ko Traffic Heatmap");
@@ -6706,23 +7027,23 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
 
                                 // Setup map
-                                const timestamp = heatmapData[0].dateTime;
-                                current_opacity = 0.5
-                                mapName = heatmapData[0].fluxName;
-                                mapDate = timestamp.replace('T', ' ');
+                                const timestamp = trafficData[0].dateTime;
+                                current_traffic_opacity = 0.5
+                                trafficMapName = trafficData[0].fluxName;
+                                trafficMapDate = timestamp.replace('T', ' ');
 
                                 // Add layer to map
-                                wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
-                                    layers: heatmapData[0].layerName,
+                                trafficWmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
+                                    layers: trafficData[0].layerName,
                                     format: 'image/png',
                                     crs: L.CRS.EPSG4326,
                                     transparent: true,
-                                    opacity: current_opacity,
+                                    opacity: current_traffic_opacity,
                                     pane: 'TrafficFlowManager:' + datasetName
                                 }).addTo(map.defaultMapRef);
 
                                 // Add Legend
-                                map.legendHeatmap.addTo(map.defaultMapRef);
+                                map.trafficLegendHeatmap.addTo(map.defaultMapRef);
                                 map.eventsOnMap.push(heatmap);
                                 const heatmapLegendColors = L.control({ position: 'bottomright' });
                                 heatmapLegendColors.onAdd = function() {
@@ -6755,6 +7076,18 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             }
                             // FINE TRAFFICFLOWMANAGER
 
+                            
+                            
+                            
+
+                            // TODO REMOVE THIS!!! ONLY FOR TESTING
+                            baseQuery = baseQuery.replace('http://geoserver:8080', 'https://wmsserver.snap4city.org');
+                            geoServerUrl = 'https://wmsserver.snap4city.org/'
+                            
+                            
+                            
+                            
+                            
                             let query = "";
                             if (baseQuery.includes("heatmap.php")) {    // OLD HEATMAP
                                 //  query = baseQuery + '&limit=30&latitude_min=' + latitude_min + '&latitude_max=' + latitude_max + '&longitude_min=' + longitude_min + '&longitude_max=' + longitude_max;
@@ -7057,32 +7390,49 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         let longitude_min = map.defaultMapRef.getBounds()._southWest.lng;
                         let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
 
-                        // INIZIO TRAFFICFLOWMANAGER
-                        if (event.passedData.includes(geoServerUrl)  && baseQuery.includes("trafficflowmanager=true")) {
 
-                            console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page);
+
+
+
+
+
+                        // TODO REMOVE THIS!!! ONLY FOR TESTING
+                        if (event.passedData.includes("trafficflowmanager=true"))
+                            geoServerUrl = 'http://geoserver:8080/'
+
+
+
+
+
+
+
+
+                        // INIZIO TRAFFICFLOWMANAGER PAGINE/ANIMAZIONE
+                        if (event.passedData.includes(geoServerUrl) && event.passedData.includes("trafficflowmanager=true")) {
+                            console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page_traffic);
                             const datasetName = event.passedData.split("WMS&layers=")[1].split("&")[0];
                             map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
                             map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
-                            const timestamp = heatmapData[current_page].dateTime;
+                            const timestamp = trafficData[current_page_traffic].dateTime;
+                            heatmap.eventType = "traffic_heatmap";
 
-                            if (!animationFlag) {
+                            if (!animationFlagTraffic) {
 
                                 // Update map date
-                                mapDate = timestamp.replace('T', ' ');
+                                trafficMapDate = timestamp.replace('T', ' ');
 
                                 // Add correct layer to the map
-                                wmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
-                                    layers: heatmapData[current_page].layerName,
+                                trafficWmsLayer = L.tileLayer.wms(geoServerUrl + "geoserver/wms", {
+                                    layers: trafficData[current_page_traffic].layerName,
                                     format: 'image/png',
                                     crs: L.CRS.EPSG4326,
                                     transparent: true,
-                                    opacity: current_opacity,
+                                    opacity: current_traffic_opacity,
                                     pane: 'TrafficFlowManager:' + datasetName
                                 }).addTo(map.defaultMapRef);
 
                                 // Add legend and heatmap
-                                map.legendHeatmap.addTo(map.defaultMapRef);
+                                map.trafficLegendHeatmap.addTo(map.defaultMapRef);
                                 map.eventsOnMap.push(heatmap);
 
                             } else {
@@ -7094,36 +7444,36 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                 const day = timestamp.substring(0, 10);
 
                                 // Get all layer names for animation
-                                if (current_page == 0) {
-                                    var offsetFwd = current_page;
-                                    while (heatmapData[offsetFwd].dateTime.substring(0, 10) == day) {
-                                        animationCurrentDayFwdTimestamp.push(heatmapData[offsetFwd].layerName);
+                                if (current_page_traffic == 0) {
+                                    var offsetFwd = current_page_traffic;
+                                    while (trafficData[offsetFwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayFwdTimestamp.push(trafficData[offsetFwd].layerName);
                                         offsetFwd++;
-                                        if (offsetFwd > numHeatmapPages() -1) {
+                                        if (offsetFwd > numTrafficHeatmapPages() -1) {
                                             break;
                                         }
                                     }
-                                } else if (current_page == numHeatmapPages() - 1) {
-                                    var offsetBckwd = current_page - 1;
-                                    while (heatmapData[offsetBckwd].dateTime.substring(0, 10) == day) {
-                                        animationCurrentDayBckwdTimestamp.push(heatmapData[offsetBckwd].layerName);
+                                } else if (current_page_traffic == numTrafficHeatmapPages() - 1) {
+                                    var offsetBckwd = current_page_traffic - 1;
+                                    while (trafficData[offsetBckwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayBckwdTimestamp.push(trafficData[offsetBckwd].layerName);
                                         offsetBckwd--;
                                         if (offsetBckwd < 0) {
                                             break;
                                         }
                                     }
                                 } else {
-                                    var offsetFwd = current_page;
-                                    while (heatmapData[offsetFwd].dateTime.substring(0, 10) == day) {
-                                        animationCurrentDayFwdTimestamp.push(heatmapData[offsetFwd].layerName);
+                                    var offsetFwd = current_page_traffic;
+                                    while (trafficData[offsetFwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayFwdTimestamp.push(trafficData[offsetFwd].layerName);
                                         offsetFwd++;
-                                        if (offsetFwd > numHeatmapPages() -1) {
+                                        if (offsetFwd > numTrafficHeatmapPages() -1) {
                                             break;
                                         }
                                     }
-                                    var offsetBckwd = current_page - 1;
-                                    while (heatmapData[offsetBckwd].dateTime.substring(0, 10) == day) {
-                                        animationCurrentDayBckwdTimestamp.push(heatmapData[offsetBckwd].layerName);
+                                    var offsetBckwd = current_page_traffic - 1;
+                                    while (trafficData[offsetBckwd].dateTime.substring(0, 10) == day) {
+                                        animationCurrentDayBckwdTimestamp.push(trafficData[offsetBckwd].layerName);
                                         offsetBckwd--;
                                         if (offsetBckwd < 0) {
                                             break;
@@ -7137,14 +7487,14 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                                 // Create animated layer using WMS animator
                                 const bbox = [longitude_min, latitude_min, longitude_max, latitude_max].join(",");
-                                const imageUrl = geoServerUrl + 'geoserver/wms/animate?layers=' + heatmapData[current_page].layerName + '&aparam=layers&avalues=' + animationStringTimestamp + '&format=image/gif;subtype=animated&format_options=gif_loop_continuosly:true;layout:message;gif_frames_delay:500&transparent=true&bbox=' + bbox;
+                                const imageUrl = geoServerUrl + 'geoserver/wms/animate?layers=' + trafficData[current_page_traffic].layerName + '&aparam=layers&avalues=' + animationStringTimestamp + '&format=image/gif;subtype=animated&format_options=gif_loop_continuosly:true;layout:message;gif_frames_delay:1000&transparent=true&width=500&bbox=' + bbox;
                                 const imageBounds = [[latitude_min, longitude_min], [latitude_max, longitude_max]];
-                                const animatedLayer = L.imageOverlay(imageUrl, imageBounds, {opacity: current_opacity, pane: 'TrafficFlowManager:' + datasetName}).addTo(map.defaultMapRef);
+                                const animatedLayer = L.imageOverlay(imageUrl, imageBounds, {opacity: current_traffic_opacity, pane: 'TrafficFlowManager:' + datasetName}).addTo(map.defaultMapRef);
 
                                 // Add legend (w/ correct options) and animated layer to the maps
-                                map.legendHeatmap.addTo(map.defaultMapRef);
-                                document.getElementById("<?= $_REQUEST['name_w'] ?>_animation").checked = true;
-                                $("<?= $_REQUEST['name_w'] ?>_slidermaxOpacity").slider('disable');
+                                map.trafficLegendHeatmap.addTo(map.defaultMapRef);
+                                document.getElementById("<?= $_REQUEST['name_w'] ?>_animation_traffic").checked = true;
+                                $("<?= $_REQUEST['name_w'] ?>_slidermaxTrafficOpacity").slider('disable');
                                 map.eventsOnMap.push(animatedLayer);
                             }
 
@@ -7178,7 +7528,21 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                             return;
                         }
-                        // FINE TRAFFICFLOWMANAGER
+                        // FINE TRAFFICFLOWMANAGER PAGINE/ANIMAZIONE
+
+
+
+
+
+
+
+                        // TODO REMOVE THIS!!! ONLY FOR TESTING
+                        geoServerUrl = 'https://wmsserver.snap4city.org/'
+
+
+
+
+
 
                         let query = "";
                         if (event.passedData.includes("heatmap.php")) {    // OLD HEATMAP
@@ -8224,7 +8588,31 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                 if (event.target === map.mapName) {
                     for (let i = map.eventsOnMap.length - 1; i >= 0; i--) {
-                        if (map.eventsOnMap[i].eventType === 'heatmap') {
+                        if (event.isTrafficHeatmap) {
+                            // rimuovi traffic heatmap
+                            if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                                map.defaultMapRef.removeLayer(trafficWmsLayer);
+                                map.defaultMapRef.removeControl(map.trafficLegendHeatmap);
+                                map.defaultMapRef.removeControl(map.eventsOnMap[i + 1].legendColors);
+                                map.eventsOnMap.splice(i, 2);
+                                break;
+                            } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate")) {
+                                map.defaultMapRef.removeLayer(map.eventsOnMap[i]);
+                                map.defaultMapRef.removeControl(map.trafficLegendHeatmap);
+                                map.defaultMapRef.removeControl(map.eventsOnMap[i + 1].legendColors);
+                                map.eventsOnMap.splice(i, 2);
+                                break;
+                            }
+
+                        } else if (i>0 && map.eventsOnMap[i-1].eventType === 'traffic_heatmap') {
+                            // logica per evitare di rimuovere layer di trafficflowmanager
+                        } else if (map.eventsOnMap[i].eventType === 'traffic_heatmap') {
+                            // logica per evitare di rimuovere layer di trafficflowmanager
+                        } else if (i>0 && map.eventsOnMap[i-1]._url && map.eventsOnMap[i-1]._url.includes("animate") && map.eventsOnMap[i-1].options.pane.includes("TrafficFlowManager")) {
+                            // logica per evitare di rimuovere layer di trafficflowmanager
+                        } else if (map.eventsOnMap[i]._url && map.eventsOnMap[i]._url.includes("animate") && map.eventsOnMap[i].options.pane.includes("TrafficFlowManager")) {
+                            // logica per evitare di rimuovere layer di trafficflowmanager
+                        } else if (map.eventsOnMap[i].eventType === 'heatmap') {
                             removeHeatmap(true);
                             map.eventsOnMap.splice(i, 1);
                         } else if (map.eventsOnMap[i].type === 'addHeatmap') {
