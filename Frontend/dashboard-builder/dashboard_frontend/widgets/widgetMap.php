@@ -6852,33 +6852,6 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         //    current_page = 0;
                         try {
 
-
-
-
-
-
-
-
-                            // TODO REMOVE THIS!!! ONLY FOR TESTING
-                            baseQuery = event.passedData;
-                            if (baseQuery.includes("trafficflowmanager=true"))
-                                geoServerUrl = 'http://geoserver:8080/'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                             const isAddingTrafficHeatmap = (event.passedData.includes(geoServerUrl) && event.passedData.includes("trafficflowmanager=true"));
                             
                             if (map.eventsOnMap.length > 0) {
@@ -6986,18 +6959,11 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                             let heatmap = {};
                             heatmap.eventType = "heatmap";
-                            //baseQuery = event.passedData; // TODO UNCOMMENT
+                            baseQuery = event.passedData;
                             let latitude_min = map.defaultMapRef.getBounds()._southWest.lat;
                             let latitude_max = map.defaultMapRef.getBounds()._northEast.lat;
                             let longitude_min = map.defaultMapRef.getBounds()._southWest.lng;
                             let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
-
-
-
-                            
-
-                            
-                            
 
                             // INIZIO TRAFFICFLOWMANAGER
                             if (baseQuery.includes(geoServerUrl) && baseQuery.includes("trafficflowmanager=true")) {
@@ -7076,18 +7042,6 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             }
                             // FINE TRAFFICFLOWMANAGER
 
-                            
-                            
-                            
-
-                            // TODO REMOVE THIS!!! ONLY FOR TESTING
-                            baseQuery = baseQuery.replace('http://geoserver:8080', 'https://wmsserver.snap4city.org');
-                            geoServerUrl = 'https://wmsserver.snap4city.org/'
-                            
-                            
-                            
-                            
-                            
                             let query = "";
                             if (baseQuery.includes("heatmap.php")) {    // OLD HEATMAP
                                 //  query = baseQuery + '&limit=30&latitude_min=' + latitude_min + '&latitude_max=' + latitude_max + '&longitude_min=' + longitude_min + '&longitude_max=' + longitude_max;
@@ -7390,23 +7344,6 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         let longitude_min = map.defaultMapRef.getBounds()._southWest.lng;
                         let longitude_max = map.defaultMapRef.getBounds()._northEast.lng;
 
-
-
-
-
-
-
-                        // TODO REMOVE THIS!!! ONLY FOR TESTING
-                        if (event.passedData.includes("trafficflowmanager=true"))
-                            geoServerUrl = 'http://geoserver:8080/'
-
-
-
-
-
-
-
-
                         // INIZIO TRAFFICFLOWMANAGER PAGINE/ANIMAZIONE
                         if (event.passedData.includes(geoServerUrl) && event.passedData.includes("trafficflowmanager=true")) {
                             console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page_traffic);
@@ -7529,20 +7466,6 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                             return;
                         }
                         // FINE TRAFFICFLOWMANAGER PAGINE/ANIMAZIONE
-
-
-
-
-
-
-
-                        // TODO REMOVE THIS!!! ONLY FOR TESTING
-                        geoServerUrl = 'https://wmsserver.snap4city.org/'
-
-
-
-
-
 
                         let query = "";
                         if (event.passedData.includes("heatmap.php")) {    // OLD HEATMAP
