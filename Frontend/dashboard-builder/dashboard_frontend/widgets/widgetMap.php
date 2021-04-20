@@ -6911,11 +6911,11 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                                     if (isAddingTrafficHeatmap) {
                                         // se sto aggiungendo una traffic heatmap e già ce n'è una sulla mappa, rimuovo la traffic heatmap corrente
                                         if (i > 0 && map.eventsOnMap[i - 1].eventType === 'traffic_heatmap') {
-                                            removeTrafficHeatmap(i, false)
+                                            removeTrafficHeatmap(i-1, false)
                                             current_page_traffic = 0;
                                             break;
                                         } else if (i > 0 && map.eventsOnMap[i - 1]._url && map.eventsOnMap[i - 1]._url.includes("animate") && map.eventsOnMap[i - 1].options.pane.includes("TrafficFlowManager")) {
-                                            removeTrafficHeatmap(i, true)
+                                            removeTrafficHeatmap(i-1, true)
                                             current_page_traffic = 0;
                                             break;
                                         }
