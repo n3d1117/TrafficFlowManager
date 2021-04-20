@@ -2779,8 +2779,8 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
         }
 
         function addDefaultBaseMap(map) {
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png', {
-                maxZoom: 18
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
             }).addTo(map);
         }
 
