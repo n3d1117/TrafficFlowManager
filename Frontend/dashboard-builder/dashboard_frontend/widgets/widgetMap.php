@@ -7347,6 +7347,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
                         // INIZIO TRAFFICFLOWMANAGER PAGINE/ANIMAZIONE
                         if (event.passedData.includes(geoServerUrl) && event.passedData.includes("trafficflowmanager=true")) {
                             console.log("TrafficFlowManager addHeatmapFromClient INIT page=" + current_page_traffic);
+                            const animationWidth = event.passedData.includes("&width=") ? event.passedData.split("&width=")[1].split("&")[0] : "512";
                             const datasetName = event.passedData.split("WMS&layers=")[1].split("&")[0];
                             map.defaultMapRef.createPane('TrafficFlowManager:' + datasetName);
                             map.defaultMapRef.getPane('TrafficFlowManager:' + datasetName).style.zIndex = 420;
@@ -7424,7 +7425,7 @@ header("Cache-Control: private, max-age=$cacheControlMaxAge");
 
                                 // Create animated layer using WMS animator
                                 const bbox = [longitude_min, latitude_min, longitude_max, latitude_max].join(",");
-                                const imageUrl = geoServerUrl + 'geoserver/wms/animate?layers=' + trafficData[current_page_traffic].layerName + '&aparam=layers&avalues=' + animationStringTimestamp + '&format=image/gif;subtype=animated&format_options=gif_loop_continuosly:true;layout:message;gif_frames_delay:1000&transparent=true&width=500&bbox=' + bbox;
+                                const imageUrl = geoServerUrl + 'geoserver/wms/animate?layers=' + trafficData[current_page_traffic].layerName + '&aparam=layers&avalues=' + animationStringTimestamp + '&format=image/gif;subtype=animated&format_options=gif_loop_continuosly:true;layout:message;gif_frames_delay:1000&transparent=true&bbox=' + bbox + '&width=' + animationWidth;
                                 const imageBounds = [[latitude_min, longitude_min], [latitude_max, longitude_max]];
                                 const animatedLayer = L.imageOverlay(imageUrl, imageBounds, {opacity: current_traffic_opacity, pane: 'TrafficFlowManager:' + datasetName}).addTo(map.defaultMapRef);
 
