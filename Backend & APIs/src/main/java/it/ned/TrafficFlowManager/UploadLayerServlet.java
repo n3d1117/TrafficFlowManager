@@ -96,11 +96,8 @@ public class UploadLayerServlet extends HttpServlet {
         Logger.log("[Servlet] Handling static graph upload");
 
         // Read JSON
-        String mainArrayString = json.asJsonArray().getJsonString(0).getString();
-        JsonReader reader = Json.createReader(new StringReader(mainArrayString));
-        JsonObject object = reader.readObject();
+        JsonObject object = json.asJsonObject();
         String staticGraphName = object.getJsonObject("nameGraphID").getString("staticGraphName");
-        reader.close();
 
         // Save static graph to disk
         Logger.log("[Servlet] Saving static graph " + staticGraphName);
@@ -112,20 +109,14 @@ public class UploadLayerServlet extends HttpServlet {
         Logger.log("[Servlet] Handling reconstruction upload");
 
         // Extract metadata & reconstruction data from JSON
-        String mainArrayString = json.asJsonArray().getJsonString(0).getString();
-        JsonReader reader = Json.createReader(new StringReader(mainArrayString));
-        JsonObject object = reader.readObject();
+        JsonObject object = json.asJsonObject();
         JsonObject reconstructionData = object.getJsonObject("reconstructionData");
         JsonObject metadata = object.getJsonObject("metadata");
-        reader.close();
 
         // Get associated static graph array data
         String associatedStaticGraphName = metadata.getString("staticGraphName");
         JsonValue staticGraph = new JSONStaticGraphPersistence().getStaticGraph(associatedStaticGraphName);
-        String staticGraphArrayString = staticGraph.asJsonArray().getJsonString(0).getString();
-        JsonReader staticGraphReader = Json.createReader(new StringReader(staticGraphArrayString));
-        JsonArray staticDataGraph = staticGraphReader.readObject().getJsonArray("dataGraph");
-        staticGraphReader.close();
+        JsonArray staticDataGraph = staticGraph.asJsonObject().getJsonArray("dataGraph");
 
         // Generate a unique layer name
         String locality = metadata.getString("locality");
