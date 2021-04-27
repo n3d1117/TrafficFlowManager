@@ -72,9 +72,11 @@ public class UploadLayerServlet extends HttpServlet {
             }
 
         } catch (IllegalArgumentException e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(buildResponse(false, "error", "Unknown payload type!"));
             e.printStackTrace();
         } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(buildResponse(false, "error", e.getMessage()));
             e.printStackTrace();
         }
