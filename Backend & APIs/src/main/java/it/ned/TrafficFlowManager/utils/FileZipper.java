@@ -12,7 +12,7 @@ public class FileZipper {
 
     // Source: https://www.baeldung.com/java-compress-and-uncompress
     public static void zipFiles(List<String> files, String output) throws IOException {
-        System.out.println("[FileZipper] Zipping files to " + output + "...");
+        Logger.log("[FileZipper] Zipping files to " + output + "...");
         FileOutputStream fos = new FileOutputStream(output);
         ZipOutputStream zipOut = new ZipOutputStream(fos);
         for (String srcFile: files) {

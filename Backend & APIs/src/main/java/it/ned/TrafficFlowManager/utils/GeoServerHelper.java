@@ -26,7 +26,7 @@ public class GeoServerHelper {
        Expected HTTP Response: 201 Created
     */
     public void publishShp(String datastore, String zipFile) throws Exception {
-        System.out.println("[GeoServerHelper] Publishing shapefile to datastore " + datastore + "...");
+        Logger.log("[GeoServerHelper] Publishing shapefile to datastore " + datastore + "...");
         String datastoreEndpoint = endpoint + "/workspaces/" + workspace + "/datastores/" + datastore;
         String urlString = datastoreEndpoint + "/file.shp";
         Integer response = HTTPHelper.uploadFile(urlString, "application/zip", user, pass, zipFile);
@@ -46,7 +46,7 @@ public class GeoServerHelper {
        Expected HTTP Response: 200 OK
     */
     public void setLayerStyle(String layerName, String styleName) throws Exception {
-        System.out.println("[GeoServerHelper] Applying style " + styleName + " to layer " + layerName + "...");
+        Logger.log("[GeoServerHelper] Applying style " + styleName + " to layer " + layerName + "...");
         String urlString = endpoint + "/layers/" + workspace + ":" + layerName;
         String xmlData = "<layer><defaultStyle><name>" + styleName + "</name></defaultStyle></layer>";
         Integer response = HTTPHelper.uploadData(urlString, "text/xml", user, pass, xmlData);

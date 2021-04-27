@@ -91,7 +91,7 @@ public class UploadLayerServlet extends HttpServlet {
 
     private void handleStaticGraph(JsonValue json) throws IOException {
 
-        System.out.println("[Servlet] Handling static graph upload");
+        Logger.log("[Servlet] Handling static graph upload");
 
         // Read JSON
         String mainArrayString = json.asJsonArray().getJsonString(0).getString();
@@ -101,13 +101,13 @@ public class UploadLayerServlet extends HttpServlet {
         reader.close();
 
         // Save static graph to disk
-        System.out.println("[Servlet] Saving static graph " + staticGraphName);
+        Logger.log("[Servlet] Saving static graph " + staticGraphName);
         new JSONStaticGraphPersistence().saveStaticGraph(staticGraphName, json);
     }
 
     private String handleReconstruction(JsonValue json) throws Exception {
 
-        System.out.println("[Servlet] Handling reconstruction upload");
+        Logger.log("[Servlet] Handling reconstruction upload");
 
         // Extract metadata & reconstruction data from JSON
         String mainArrayString = json.asJsonArray().getJsonString(0).getString();
@@ -144,7 +144,7 @@ public class UploadLayerServlet extends HttpServlet {
 
     private void convertToShapefileAndUpload(String layerName, JsonArray staticGraph, JsonObject reconstructionData) throws Exception {
 
-        System.out.println("[Servlet] Starting conversion to Shapefile...");
+        Logger.log("[Servlet] Starting conversion to Shapefile...");
 
         // Setup tmp folders and filenames
         String tmpLayersFolder = ConfigProperties.getProperties().getProperty("tmpLayersFolder");
@@ -189,7 +189,7 @@ public class UploadLayerServlet extends HttpServlet {
         // Cleanup tmp layer folder
         FileUtils.deleteDirectory(new File(layerFolder));
 
-        System.out.println("[Servlet] Done conversion and layer upload!");
+        Logger.log("[Servlet] Done conversion and layer upload!");
     }
 
     /**

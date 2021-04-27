@@ -21,7 +21,7 @@ public class SHPExtractor {
 
     public static void extract(String inputCsv, String outputShp) throws IOException {
 
-        System.out.println("[SHPExtractor] Extracting Shapefile...");
+        Logger.log("[SHPExtractor] Extracting Shapefile...");
 
         // Input file
         File inputFile = new File(inputCsv);
@@ -61,7 +61,7 @@ public class SHPExtractor {
 
             // First line of the data file is the header
             String line = reader.readLine();
-            System.out.println("[SHPExtractor] Header: " + line);
+            Logger.log("[SHPExtractor] Header: " + line);
 
             for (line = reader.readLine(); line != null; line = reader.readLine()) {
                 if (line.trim().length() > 0) { // skip blank lines
@@ -106,7 +106,7 @@ public class SHPExtractor {
         }
 
         // Write the Shapefile
-        System.out.println("[SHPExtractor] Writing output to " + outputShp);
+        Logger.log("[SHPExtractor] Writing output to " + outputShp);
         SHPWriter writer = new SHPWriter(new File(outputShp));
         writer.writeFeatures(DataUtilities.collection(collection));
     }

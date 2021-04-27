@@ -1,6 +1,7 @@
 package it.ned.TrafficFlowManager.persistence;
 
 import it.ned.TrafficFlowManager.utils.ConfigProperties;
+import it.ned.TrafficFlowManager.utils.Logger;
 
 import javax.json.*;
 import javax.json.stream.JsonCollectors;
@@ -17,7 +18,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
         jsonDatabasePath = ConfigProperties.getProperties().getProperty("db");
 
         if (!new File(jsonDatabasePath).exists()) {
-            System.out.println("[DB] First write, creating json db...");
+            Logger.log("[DB] First write, creating json db...");
             PrintWriter writer = new PrintWriter(jsonDatabasePath, "UTF-8");
             writer.println("[]");
             writer.close();
@@ -26,7 +27,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
     @Override
     public void addEntry(JsonObject metadata, String layerName) throws IOException {
-        System.out.println("[DB] Adding entry for layer " + layerName + "...");
+        Logger.log("[DB] Adding entry for layer " + layerName + "...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
 
             // Append layer name to metadata object
@@ -53,13 +54,13 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
                 fileWriter.flush();
             }
 
-            System.out.println("[DB] Done!");
+            Logger.log("[DB] Done!");
         }
     }
 
     @Override
     public JsonArray allLayersClustered() throws IOException {
-        System.out.println("[DB] Retrieving all layers clustered...");
+        Logger.log("[DB] Retrieving all layers clustered...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
 
             JsonArray array = Json.createReader(inputStream).readArray();
@@ -97,7 +98,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
     @Override
     public JsonArray layersForFluxName(String fluxName) throws IOException {
-        System.out.println("[DB] Retrieving all layers for fluxName " + fluxName + "...");
+        Logger.log("[DB] Retrieving all layers for fluxName " + fluxName + "...");
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
             JsonArray array = Json.createReader(inputStream).readArray();
             return array
@@ -111,7 +112,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
     @Override
     public void changeColorMapForFluxName(String fluxName, String newColorMap) throws IOException {
-        System.out.println("[DB] Changing color map to " + newColorMap + " for fluxName " + fluxName + "...");
+        Logger.log("[DB] Changing color map to " + newColorMap + " for fluxName " + fluxName + "...");
 
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
             JsonArray array = Json.createReader(inputStream).readArray();
@@ -136,7 +137,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
     @Override
     public void deleteFlux(String fluxName) throws IOException {
-        System.out.println("[DB] Deleting flux " + fluxName + "...");
+        Logger.log("[DB] Deleting flux " + fluxName + "...");
 
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
             JsonArray array = Json.createReader(inputStream).readArray();
@@ -159,7 +160,7 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
     @Override
     public void deleteLayer(String layerName) throws IOException {
-        System.out.println("[DB] Deleting layer " + layerName + "...");
+        Logger.log("[DB] Deleting layer " + layerName + "...");
 
         try (InputStream inputStream = new FileInputStream(jsonDatabasePath)) {
             JsonArray array = Json.createReader(inputStream).readArray();

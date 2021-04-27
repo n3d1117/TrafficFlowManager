@@ -71,7 +71,7 @@ public class HTTPHelper {
         }
         in.close();
         if (!content.toString().isEmpty())
-            System.out.println(content.toString());
+            Logger.log(content.toString());
 
         con.disconnect();
         return responseCode;

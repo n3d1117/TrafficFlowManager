@@ -7,11 +7,11 @@ public class CSVExtractor {
 
     public static void extract(JsonArray staticGraph, JsonObject reconstructionData, String outputFile) throws FileNotFoundException {
 
-        System.out.println("[CSVExtractor] Extracting CSV...");
+        Logger.log("[CSVExtractor] Extracting CSV...");
 
         try (PrintWriter writer = new PrintWriter(outputFile)) {
 
-            System.out.println("[CSVExtractor] Writing output to " + outputFile);
+            Logger.log("[CSVExtractor] Writing output to " + outputFile);
 
             StringBuilder sb = new StringBuilder();
             sb.append("segment_id,road_id,start_lat,start_long,end_lat,end_long,lanes,fipili,traffic_value,traffic_label");

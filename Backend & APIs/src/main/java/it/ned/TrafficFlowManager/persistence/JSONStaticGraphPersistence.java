@@ -1,6 +1,7 @@
 package it.ned.TrafficFlowManager.persistence;
 
 import it.ned.TrafficFlowManager.utils.ConfigProperties;
+import it.ned.TrafficFlowManager.utils.Logger;
 
 import javax.json.*;
 import java.io.*;
@@ -16,7 +17,7 @@ public class JSONStaticGraphPersistence implements StaticGraphPersistenceInterfa
 
     @Override
     public void saveStaticGraph(String staticGraphName, JsonValue json) throws IOException {
-        System.out.println("[SDB] Saving static graph " + staticGraphName);
+        Logger.log("[SDB] Saving static graph " + staticGraphName);
         String filename = staticGraphFolder + "/" + staticGraphName + ".json";
         try (FileWriter file = new FileWriter(filename)) {
             file.write(json.toString());
@@ -26,7 +27,7 @@ public class JSONStaticGraphPersistence implements StaticGraphPersistenceInterfa
 
     @Override
     public JsonValue getStaticGraph(String staticGraphName) throws FileNotFoundException {
-        System.out.println("[SDB] retrieving static graph " + staticGraphName);
+        Logger.log("[SDB] retrieving static graph " + staticGraphName);
         String filename = staticGraphFolder + "/" + staticGraphName + ".json";
         InputStream inputStream = new FileInputStream(filename);
         JsonReader reader = Json.createReader(inputStream);
