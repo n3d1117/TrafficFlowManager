@@ -13,9 +13,11 @@ import java.util.Set;
 public class JSONReconstructionPersistence implements ReconstructionPersistenceInterface {
 
     private final String jsonDatabasePath;
+    private final String reconstructionsFolder;
 
     public JSONReconstructionPersistence() throws IOException {
         jsonDatabasePath = ConfigProperties.getProperties().getProperty("db");
+        reconstructionsFolder = ConfigProperties.getProperties().getProperty("reconstructionsFolder");
 
         if (!new File(jsonDatabasePath).exists()) {
             Logger.log("[DB] First write, creating json db...");
@@ -23,6 +25,8 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
             writer.println("[]");
             writer.close();
         }
+
+        new File(reconstructionsFolder).mkdir();
     }
 
     @Override
@@ -56,6 +60,17 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
 
             Logger.log("[DB] Done!");
         }
+    }
+
+    @Override
+    public void saveReconstructionAsJson(JsonValue json, String layerName) throws IOException {
+        Logger.log("[DB] Saving reconstruction JSON to " + reconstructionsFolder);
+        String filename = reconstructionsFolder + "/" + layerName + ".json";
+        try (FileWriter file = new FileWriter(filename)) {
+            file.write(json.toString());
+            file.flush();
+        }
+        Logger.log("[DB] Done! Saved to " + filename);
     }
 
     @Override

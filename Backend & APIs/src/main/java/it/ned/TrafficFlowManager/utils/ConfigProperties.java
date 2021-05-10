@@ -13,8 +13,7 @@ public class ConfigProperties {
      */
     public static Properties getProperties() throws IOException {
         Properties prop = new Properties();
-        // FileInputStream file = new FileInputStream("/Users/ned/Documents/unifi/BIG_DATA_ARCHITECTURES/TrafficFlowManager/src/main/resources/config.properties");
-        FileInputStream file = new FileInputStream("/home/ned/TrafficFlowManager/TrafficFlowManager.properties");
+        FileInputStream file = new FileInputStream("/home/debian/TrafficFlowManager/config.properties");
         prop.load(file);
         return prop;
     }

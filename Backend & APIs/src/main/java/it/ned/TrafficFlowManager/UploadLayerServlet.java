@@ -2,6 +2,7 @@ package it.ned.TrafficFlowManager;
 
 import it.ned.TrafficFlowManager.persistence.JSONReconstructionPersistence;
 import it.ned.TrafficFlowManager.persistence.JSONStaticGraphPersistence;
+import it.ned.TrafficFlowManager.persistence.ReconstructionPersistenceInterface;
 import it.ned.TrafficFlowManager.utils.*;
 import org.apache.commons.io.FileUtils;
 
@@ -128,8 +129,10 @@ public class UploadLayerServlet extends HttpServlet {
         // Convert to SHP and upload to GeoServer
         convertToShapefileAndUpload(layerName, staticDataGraph, reconstructionData);
 
-        // Add entry to db
-        new JSONReconstructionPersistence().addEntry(metadata, layerName);
+        // Add entry to db and save as json file to reconstructions folder
+        ReconstructionPersistenceInterface db = new JSONReconstructionPersistence();
+        db.addEntry(metadata, layerName);
+        db.saveReconstructionAsJson(json, layerName);
 
         // Done! Return final layer name
         return layerName;

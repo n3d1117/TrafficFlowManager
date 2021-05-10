@@ -204,6 +204,7 @@ if (isset ($_SESSION['username'])){
                                                     <th><div><a>Date</a></div></th>
                                                     <th><div><a>Duration</a></div></th>
                                                     <th><div><a>Layer Name</a></div></th>
+                                                    <th><div><a>View JSON</a></div></th>
                                                     <th><div><a>Delete</a></div></th>
                                                 </thead>
                                                 <tbody>
@@ -527,6 +528,13 @@ if (isset ($_SESSION['username'])){
                     }
                 });
             });
+
+            // Function called when clicking VIEW JSON inside HEATMAP
+            $(document).on('click', '.view-json', function() {
+                const layerName = $(this).data('layer');
+                const url = host_trafficflowmanager + 'trafficflowmanager/api/json?layerName=' + layerName;
+                window.open(url, '_blank');
+            });
         });
 
         function load_heatmap_data(flux_name) {
@@ -558,7 +566,7 @@ if (isset ($_SESSION['username'])){
 
                     // Show data
                     for (let i = 0; i < data.length; i++) {
-                        $('#value_table tbody').append('<tr><td>' + data[i]['dateTime'] + '</td><td>' + data[i]['duration'] + '</td><td>' + data[i]['layerName'] + '</td><td><button type="button" class="delDashBtn det_data" data-target="#data_elimination" data-toggle="modal" data-flux=' + data[i]['fluxName'] + ' value=' + data[i]['layerName'] + '>DEL</button></td></tr>');
+                        $('#value_table tbody').append('<tr><td>' + data[i]['dateTime'] + '</td><td>' + data[i]['duration'] + '</td><td>' + data[i]['layerName'] + '</td><td><button type="button" class="viewDashBtn view-json" data-target="#view-json" data-toggle="modal" data-layer=' + data[i]['layerName'] + ' value=' + data[i]['layerName'] + '>JSON</button>' + '</td><td><button type="button" class="delDashBtn det_data" data-target="#data_elimination" data-toggle="modal" data-flux=' + data[i]['fluxName'] + ' value=' + data[i]['layerName'] + '>DEL</button></td></tr>');
                     }
 
                     // Use DataTable for paging and ordering
