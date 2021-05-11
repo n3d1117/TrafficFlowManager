@@ -24,17 +24,26 @@ public class JsonIndexServlet extends HttpServlet {
         response.setCharacterEncoding("utf-8");
 
         String reconstructionsFolder = ConfigProperties.getProperties().getProperty("reconstructionsFolder");
-        String layerName = request.getParameter("layerName");
-        if (layerName != null) {
-            response.setHeader("Content-Disposition", "filename=\"" + layerName + "\"");
-            String filename = reconstructionsFolder + "/" + layerName + ".json";
-            InputStream inputStream = new FileInputStream(filename);
-            JsonReader reader = Json.createReader(inputStream);
-            JsonValue jsonValue = reader.readValue();
-            response.getWriter().write(jsonValue.toString());
+        String staticGraphsFolder = ConfigProperties.getProperties().getProperty("staticGraphsFolder");
+
+        if (request.getParameter("layerName") != null) {
+            String layerName = request.getParameter("layerName");
+            serve(response, reconstructionsFolder, layerName);
+        } else if (request.getParameter("staticGraphName") != null) {
+            String staticGraphName = request.getParameter("staticGraphName");
+            serve(response, staticGraphsFolder, staticGraphName);
         } else {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
         response.getWriter().close();
+    }
+
+    private void serve(HttpServletResponse response, String folder, String filename) throws IOException {
+        response.setHeader("Content-Disposition", "filename=\"" + filename + "\"");
+        String fullFilename = folder + "/" + filename + ".json";
+        InputStream inputStream = new FileInputStream(fullFilename);
+        JsonReader reader = Json.createReader(inputStream);
+        JsonValue jsonValue = reader.readValue();
+        response.getWriter().write(jsonValue.toString());
     }
 }
