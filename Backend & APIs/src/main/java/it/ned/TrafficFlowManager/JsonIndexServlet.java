@@ -58,6 +58,5 @@ public class JsonIndexServlet extends HttpServlet {
         JsonReader reader = Json.createReader(inputStream);
         JsonValue jsonValue = reader.readValue();
         response.getWriter().write(jsonValue.toString());
-        response.getWriter().close();
     }
 }
