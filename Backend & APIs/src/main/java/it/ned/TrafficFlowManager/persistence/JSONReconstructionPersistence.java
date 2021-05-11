@@ -1,14 +1,14 @@
 package it.ned.TrafficFlowManager.persistence;
 
 import it.ned.TrafficFlowManager.utils.ConfigProperties;
+import it.ned.TrafficFlowManager.utils.FileZipper;
 import it.ned.TrafficFlowManager.utils.Logger;
+import org.apache.commons.io.FileUtils;
 
 import javax.json.*;
 import javax.json.stream.JsonCollectors;
 import java.io.*;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class JSONReconstructionPersistence implements ReconstructionPersistenceInterface {
 
@@ -63,14 +63,24 @@ public class JSONReconstructionPersistence implements ReconstructionPersistenceI
     }
 
     @Override
-    public void saveReconstructionAsJson(JsonValue json, String layerName) throws IOException {
-        Logger.log("[DB] Saving reconstruction JSON to " + reconstructionsFolder);
-        String filename = reconstructionsFolder + "/" + layerName + ".json";
-        try (FileWriter file = new FileWriter(filename)) {
+    public void saveReconstructionAsZippedJson(JsonValue json, String layerName) throws IOException {
+        Logger.log("[DB] Saving reconstruction zipped JSON to " + reconstructionsFolder);
+
+        // Write .json
+        String filenameJson = reconstructionsFolder + "/" + layerName + ".json";
+        try (FileWriter file = new FileWriter(filenameJson)) {
             file.write(json.toString());
             file.flush();
         }
-        Logger.log("[DB] Done! Saved to " + filename);
+
+        // Zip .json
+        String filenameZip = reconstructionsFolder + "/" + layerName + ".zip";
+        FileZipper.zipFiles(Collections.singletonList(filenameJson), filenameZip);
+
+        // Delete .json
+        FileUtils.deleteQuietly(new File(filenameJson));
+
+        Logger.log("[DB] Done! Saved to " + filenameZip);
     }
 
     @Override

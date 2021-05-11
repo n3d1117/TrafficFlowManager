@@ -71,14 +71,17 @@ public class UploadLayerServlet extends HttpServlet {
                     resp.getWriter().print(buildResponse(true, "layerName", uploadedLayerName));
                     break;
             }
+            resp.getWriter().close();
 
         } catch (IllegalArgumentException e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(buildResponse(false, "error", "Unknown payload type!"));
+            resp.getWriter().close();
             e.printStackTrace();
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(buildResponse(false, "error", e.getMessage()));
+            resp.getWriter().close();
             e.printStackTrace();
         }
     }
@@ -129,10 +132,10 @@ public class UploadLayerServlet extends HttpServlet {
         // Convert to SHP and upload to GeoServer
         convertToShapefileAndUpload(layerName, staticDataGraph, reconstructionData);
 
-        // Add entry to db and save as json file to reconstructions folder
+        // Add entry to db and save as zipped json file to reconstructions folder
         ReconstructionPersistenceInterface db = new JSONReconstructionPersistence();
         db.addEntry(metadata, layerName);
-        db.saveReconstructionAsJson(json, layerName);
+        db.saveReconstructionAsZippedJson(json, layerName);
 
         // Done! Return final layer name
         return layerName;
